@@ -13,7 +13,7 @@ export const demoProducts: StoreProduct[] = [
     pickup: true,
     ship: true,
     stockStatus: "made_to_order",
-    image: null,
+    image: "/products/wave-planter-demo.png",
     accent: "clay",
     demo: true,
     variants: [
@@ -33,7 +33,7 @@ export const demoProducts: StoreProduct[] = [
     pickup: true,
     ship: true,
     stockStatus: "in_stock",
-    image: null,
+    image: "/products/articulated-dragon-demo.png",
     accent: "ocean",
     demo: true,
     variants: [
@@ -53,7 +53,7 @@ export const demoProducts: StoreProduct[] = [
     pickup: true,
     ship: true,
     stockStatus: "made_to_order",
-    image: null,
+    image: "/products/controller-dock-demo.png",
     accent: "graphite",
     demo: true,
     variants: [
@@ -72,7 +72,7 @@ export const demoProducts: StoreProduct[] = [
     pickup: true,
     ship: true,
     stockStatus: "in_stock",
-    image: null,
+    image: "/products/hex-catchall-tray-demo.png",
     accent: "moss",
     demo: true,
     variants: [
@@ -92,7 +92,7 @@ export const demoProducts: StoreProduct[] = [
     pickup: true,
     ship: true,
     stockStatus: "made_to_order",
-    image: null,
+    image: "/products/book-nook-markers-demo.png",
     accent: "rose",
     demo: true,
     variants: [
@@ -111,7 +111,7 @@ export const demoProducts: StoreProduct[] = [
     pickup: true,
     ship: true,
     stockStatus: "sold_out",
-    image: null,
+    image: "/products/cable-comb-set-demo.png",
     accent: "yellow",
     demo: true,
     variants: [

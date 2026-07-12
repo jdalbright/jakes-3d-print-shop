@@ -5,6 +5,14 @@ import { getStripe } from "./stripe";
 import type { CatalogResult, StoreProduct } from "./types";
 
 const accents = ["clay", "ocean", "graphite", "moss", "rose", "yellow"];
+const demoImages: Record<string, string> = {
+  "wave-planter": "/products/wave-planter-demo.png",
+  "articulated-dragon": "/products/articulated-dragon-demo.png",
+  "controller-dock": "/products/controller-dock-demo.png",
+  "hex-catchall-tray": "/products/hex-catchall-tray-demo.png",
+  "book-nook-marker-set": "/products/book-nook-markers-demo.png",
+  "cable-comb-set": "/products/cable-comb-set-demo.png",
+};
 
 function splitMetadata(value: string | undefined, fallback: string[]) {
   if (!value) return fallback;
@@ -49,9 +57,12 @@ function productFromStripe(
       ? stock
       : "made_to_order";
 
+  const slug = product.metadata.shop_slug || product.id;
+  const isDemo = boolMetadata(product.metadata.demo);
+
   return {
     id: product.id,
-    slug: product.metadata.shop_slug || product.id,
+    slug,
     name: product.name,
     description: product.description || "A small-batch 3D print made with care in Jake's studio.",
     category: product.metadata.category || "Prints",
@@ -60,10 +71,10 @@ function productFromStripe(
     pickup: boolMetadata(product.metadata.pickup, true),
     ship: boolMetadata(product.metadata.ship, true),
     stockStatus,
-    image: product.images[0] || null,
+    image: product.images[0] || (isDemo ? demoImages[slug] : null) || null,
     accent: product.metadata.accent || accents[index % accents.length],
     variants,
-    demo: boolMetadata(product.metadata.demo),
+    demo: isDemo,
   };
 }
 

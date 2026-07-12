@@ -21,6 +21,7 @@ test("server-renders the complete test storefront", async () => {
   assert.match(html, /Good ideas/);
   assert.match(html, /Test shop/);
   assert.match(html, /Wave Planter/);
+  assert.match(html, /wave-planter-demo\.png/);
   assert.match(html, /Free local pickup/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/);
 });
