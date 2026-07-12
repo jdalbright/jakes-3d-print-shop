@@ -18,11 +18,12 @@ test("server-renders the complete test storefront", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Jake’s 3D Print Shop/);
-  assert.match(html, /Good ideas/);
+  assert.match(html, /Useful things/);
   assert.match(html, /Test shop/);
   assert.match(html, /Wave Planter/);
   assert.match(html, /wave-planter-demo\.png/);
-  assert.match(html, /Free local pickup/);
+  assert.match(html, /Local pickup/);
+  assert.doesNotMatch(html, /Studio favorites|Room for a good idea|Good ideas/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/);
 });
 

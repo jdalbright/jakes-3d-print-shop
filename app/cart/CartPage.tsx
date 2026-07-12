@@ -58,7 +58,7 @@ export function CartPage() {
     return (
       <section className="empty-cart">
         <p className="eyebrow">Your cart</p>
-        <h1>Room for a good idea.</h1>
+        <h1>Your cart is empty.</h1>
         <p>Your cart is empty. Take a look around the print shelf and find something useful.</p>
         <Link className="primary-button" href="/#shop">Browse the prints</Link>
       </section>
@@ -68,7 +68,7 @@ export function CartPage() {
   return (
     <section className="cart-page">
       <div className="cart-heading">
-        <div><p className="eyebrow">Your cart</p><h1>Ready when <em>you are.</em></h1></div>
+        <div><p className="eyebrow">Order details</p><h1>Your cart</h1></div>
         <p>{items.reduce((sum, item) => sum + item.quantity, 0)} item{items.length === 1 ? "" : "s"} saved on this device</p>
       </div>
       {searchParams.get("checkout") === "canceled" ? <div className="notice">Checkout was canceled. Your cart is still here.</div> : null}

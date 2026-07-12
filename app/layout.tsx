@@ -13,11 +13,15 @@ export const metadata: Metadata = {
   description: "Useful objects, playful details, and small-batch 3D prints made one layer at a time.",
   openGraph: {
     title: "Jake’s 3D Print Shop",
-    description: "Good ideas, printed. Small-batch objects for desks, shelves, gifts, and everyday little problems.",
+    description: "Useful things, made one layer at a time. Small-batch 3D prints for desks, shelves, and everyday fixes.",
     type: "website",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "Jake's 3D Print Shop" }],
   },
-  twitter: { card: "summary_large_image", images: ["/og.png"] },
+  twitter: {
+    card: "summary_large_image",
+    description: "Useful things, made one layer at a time. Small-batch 3D prints for desks, shelves, and everyday fixes.",
+    images: ["/og.png"],
+  },
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };
 

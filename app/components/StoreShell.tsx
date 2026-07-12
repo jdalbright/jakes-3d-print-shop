@@ -152,10 +152,6 @@ export function StoreShell({
           <Link href="/policies/privacy">Privacy</Link>
           <Link href="/policies/terms">Terms</Link>
         </div>
-        <div className="footer-note">
-          <span>TEST STORE</span>
-          <p>Real listings and approved policies are required before launch.</p>
-        </div>
       </footer>
     </StoreContext.Provider>
   );

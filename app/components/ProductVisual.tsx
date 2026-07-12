@@ -7,7 +7,6 @@ export function ProductVisual({ product, detail = false }: { product: StoreProdu
         {/* Stripe product images are merchant-controlled catalog content. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={product.image} alt={product.name} />
-        {product.demo ? <span className="demo-badge">Demo item</span> : null}
       </div>
     );
   }
@@ -28,8 +27,7 @@ export function ProductVisual({ product, detail = false }: { product: StoreProdu
       <span className="visual-object" aria-hidden="true">
         <i /><i /><i /><b>{initials}</b>
       </span>
-      <span className="visual-caption">{product.category} / sample render</span>
-      <span className="demo-badge">Demo item</span>
+      <span className="visual-caption">Photo coming soon</span>
     </div>
   );
 }

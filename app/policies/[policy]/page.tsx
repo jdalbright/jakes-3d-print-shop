@@ -64,8 +64,8 @@ export default async function PolicyPage({ params }: Props) {
       <h1>{entry.title}</h1>
       <p className="policy-intro">{entry.intro}</p>
       <div className="policy-sections">
-        {entry.sections.map(([title, content], index) => (
-          <article key={title}><span>0{index + 1}</span><div><h2>{title}</h2><p>{content}</p></div></article>
+        {entry.sections.map(([title, content]) => (
+          <article key={title}><div><h2>{title}</h2><p>{content}</p></div></article>
         ))}
       </div>
       <Link className="text-link" href="/">Back to the shop <span aria-hidden="true">↗</span></Link>

@@ -61,9 +61,8 @@ export default async function SuccessPage({ searchParams }: Props) {
 
   return (
     <section className="confirmation-page">
-      <div className="confirmation-mark" aria-hidden="true"><span>✓</span></div>
-      <p className="eyebrow">Payment confirmed</p>
-      <h1>It’s in the <em>queue.</em></h1>
+      <p className="confirmation-status">Payment / confirmed</p>
+      <h1>Order confirmed.</h1>
       <p className="confirmation-deck">
         Thanks{session.customer_details?.name ? `, ${session.customer_details.name.split(" ")[0]}` : ""}. Your order is paid and Jake has the details.
       </p>
