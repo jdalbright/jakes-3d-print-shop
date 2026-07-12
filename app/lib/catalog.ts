@@ -63,6 +63,7 @@ function productFromStripe(
     image: product.images[0] || null,
     accent: product.metadata.accent || accents[index % accents.length],
     variants,
+    demo: boolMetadata(product.metadata.demo),
   };
 }
 

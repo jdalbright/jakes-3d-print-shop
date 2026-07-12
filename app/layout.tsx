@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Mono, Manrope } from "next/font/google";
 import { StoreShell } from "./components/StoreShell";
+import { isLiveLaunchEnabled } from "./lib/stripe";
 import "./globals.css";
 
 const sans = Manrope({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
@@ -24,7 +25,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className={`${sans.variable} ${mono.variable}`}>
-        <StoreShell checkoutEnabled={Boolean(process.env.STRIPE_SECRET_KEY)}>{children}</StoreShell>
+        <StoreShell
+          checkoutEnabled={Boolean(process.env.STRIPE_SECRET_KEY) && (process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_") || process.env.STORE_LIVE_MODE === "true")}
+          testMode={!isLiveLaunchEnabled()}
+        >
+          {children}
+        </StoreShell>
       </body>
     </html>
   );

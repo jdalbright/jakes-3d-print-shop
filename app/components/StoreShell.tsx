@@ -45,9 +45,11 @@ function readCart(): CartItem[] {
 export function StoreShell({
   children,
   checkoutEnabled,
+  testMode,
 }: {
   children: React.ReactNode;
   checkoutEnabled: boolean;
+  testMode: boolean;
 }) {
   const pathname = usePathname();
   const [items, setItems] = useState<CartItem[]>([]);
@@ -112,10 +114,12 @@ export function StoreShell({
   return (
     <StoreContext.Provider value={value}>
       <a className="skip-link" href="#main-content">Skip to content</a>
-      <div className="test-banner" role="status">
-        <span className="status-dot" aria-hidden="true" />
-        Test shop · demo products · no live charges
-      </div>
+      {testMode ? (
+        <div className="test-banner" role="status">
+          <span className="status-dot" aria-hidden="true" />
+          Test shop · demo products · no live charges
+        </div>
+      ) : null}
       <header className="site-header">
         <Link className="brand" href="/" aria-label="Jake's 3D Print Shop home">
           <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>

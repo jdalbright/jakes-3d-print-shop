@@ -50,4 +50,14 @@ test("checkout keeps prices authoritative and secrets server-only", async () => 
   assert.match(checkout, /fulfillment_method/);
   assert.doesNotMatch(shell, /STRIPE_SECRET_KEY/);
   assert.match(stripe, /process\.env\.STRIPE_SECRET_KEY/);
+  assert.match(stripe, /STORE_LIVE_MODE/);
+});
+
+test("catalog seeding is test-mode only and idempotent", async () => {
+  const seed = await readFile(new URL("../scripts/seed-stripe-test-catalog.mjs", import.meta.url), "utf8");
+  assert.match(seed, /startsWith\("sk_test_"\)/);
+  assert.match(seed, /metadata\['seed_key'\]/);
+  assert.match(seed, /lookup_keys/);
+  assert.match(seed, /storefront: "true"/);
+  assert.match(seed, /Stripe test catalog ready/);
 });
