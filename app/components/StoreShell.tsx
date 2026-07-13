@@ -12,7 +12,7 @@ import {
 } from "react";
 import type { CartItem } from "../lib/types";
 
-const STORAGE_KEY = "jakes-3d-print-shop-cart-v1";
+const STORAGE_KEY = "jakes-3d-print-shop-cart-v2";
 
 type StoreContextValue = {
   items: CartItem[];
@@ -119,7 +119,7 @@ export function StoreShell({
           <span className="status-dot" aria-hidden="true" />
           {checkoutEnabled
             ? "Stripe sandbox · test cards only · no live charges"
-            : "Test shop · demo products · no live charges"}
+            : "Test shop · product preview · no live charges"}
         </div>
       ) : null}
       <header className="site-header">
@@ -128,8 +128,8 @@ export function StoreShell({
           <span>Jake’s <b>3D Print Shop</b></span>
         </Link>
         <nav aria-label="Primary navigation">
-          <Link className={pathname === "/" ? "active" : ""} href="/#shop">Shop</Link>
-          <Link href="/#studio">The studio</Link>
+          <Link className={pathname.startsWith("/products") ? "active" : ""} href="/products">Products</Link>
+          <Link className="studio-nav-link" href="/#studio">The studio</Link>
           <Link className={pathname === "/cart" ? "active cart-link" : "cart-link"} href="/cart">
             Cart <span aria-label={`${itemCount} items`}>{hydrated ? itemCount : 0}</span>
           </Link>
@@ -146,6 +146,7 @@ export function StoreShell({
         </div>
         <div className="footer-links">
           <span>Shop details</span>
+          <Link href="/products">Products</Link>
           <Link href="/policies/shipping">Shipping & pickup</Link>
           <Link href="/policies/returns">Returns</Link>
         </div>

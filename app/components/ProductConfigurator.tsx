@@ -82,7 +82,7 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
 
       <dl className="variant-specs" aria-live="polite">
         <div><dt>SKU</dt><dd>{variant.sku}</dd></div>
-        <div><dt>Dimensions</dt><dd>{variant.dimensions || "See size label"}</dd></div>
+        <div><dt>Dimensions</dt><dd>{variant.dimensions || "Pending final test print"}</dd></div>
       </dl>
 
       <div className="buy-row">

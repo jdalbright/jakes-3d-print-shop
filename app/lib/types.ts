@@ -1,4 +1,5 @@
 export type Fulfillment = "shipping" | "pickup";
+export type ProductLicenseStatus = "pending" | "active" | "expired" | "not_required";
 
 export type ProductVariant = {
   priceId: string;
@@ -30,6 +31,10 @@ export type StoreProduct = {
   finish: string;
   care: string;
   leadTime: string;
+  designerName?: string;
+  designerUrl?: string;
+  sourceModelUrl?: string;
+  licenseStatus: ProductLicenseStatus;
   variants: ProductVariant[];
   demo?: boolean;
 };

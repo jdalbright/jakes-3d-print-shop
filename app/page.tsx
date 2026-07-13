@@ -2,31 +2,40 @@ import Link from "next/link";
 import { CatalogGrid } from "./components/CatalogGrid";
 import { getCatalog } from "./lib/catalog";
 
+function money(amount: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount / 100);
+}
+
 export default async function Home() {
-  const { products, source } = await getCatalog();
+  const { products } = await getCatalog();
+  const featuredProducts = products.filter((product) => product.featured);
+  const popularProducts = (featuredProducts.length ? featuredProducts : products).slice(0, 3);
+  const primaryProduct = popularProducts[0];
+  const primaryPrice = primaryProduct
+    ? Math.min(...primaryProduct.variants.map((variant) => variant.unitAmount))
+    : 0;
 
   return (
     <>
       <section className="hero-section">
         <div className="hero-copy">
-          <p className="eyebrow hero-kicker">Jake’s workbench / small-batch PLA</p>
-          <h1>Useful things, made one layer at a time.</h1>
+          <p className="eyebrow hero-kicker">Jake’s workbench / licensed small-batch print</p>
+          <h1>A cleaner desk, one layer at a time.</h1>
           <p className="hero-deck">
-            Prints for desks, shelves, gifts, and the everyday fixes in between. Pick a size and color; Jake handles the making.
+            Meet the Onami 2 Headphone Stand: a calm wave-inspired form, printed to order and finished by hand in Jake’s studio.
           </p>
           <div className="hero-actions">
-            <Link className="primary-button" href="#shop">Shop prints</Link>
+            <Link className="primary-button" href="/products/onami-2-headphone-stand">View the Onami 2</Link>
           </div>
           <p className="hero-footnote">Made locally · usually ready in 3–5 business days</p>
         </div>
         <div className="hero-product">
-          {/* Demo catalog photography is replaced by real Stripe product images at launch. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/products/controller-dock-demo.png" alt="Graphite 3D-printed controller dock" />
+          <img src="/products/onami-2-headphone-stand-hero-v3.png" alt="Slate-blue Onami 2 Headphone Stand" />
           <div className="hero-product-note">
-            <span>On the bench</span>
-            <strong>Controller Dock</strong>
-            <small>Graphite PLA · $22</small>
+            <span>First off the bench</span>
+            <strong>{primaryProduct?.name || "Onami 2 Headphone Stand"}</strong>
+            <small>Design by Meyui · {money(primaryPrice || 3400)}</small>
           </div>
         </div>
       </section>
@@ -42,16 +51,19 @@ export default async function Home() {
 
       <section className="shop-section" id="shop">
         <div className="section-heading">
-          <div><p className="eyebrow">The print shelf</p><h2>Choose a print.</h2></div>
-          <p>{source === "demo" ? "Six sample listings show how your real Stripe catalog will look." : `${products.length} small-batch prints, managed through Stripe.`}</p>
+          <div><p className="eyebrow">The print shelf</p><h2>First off the bench.</h2></div>
+          <div className="section-heading-side">
+            <p>One focused product while Jake finishes testing the next additions.</p>
+            <Link className="text-link" href="/products/onami-2-headphone-stand">View product <span aria-hidden="true">→</span></Link>
+          </div>
         </div>
-        <CatalogGrid products={products} />
+        <CatalogGrid products={popularProducts} showFilters={false} />
       </section>
 
       <section className="studio-section" id="studio">
         <div className="studio-photo">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/products/wave-planter-demo.png" alt="Layer detail on a terracotta 3D-printed planter" />
+          <img src="/products/onami-2-headphone-stand-detail-v3.png" alt="Close view of the Onami 2 headband cradle and print layers" />
         </div>
         <div className="studio-copy">
           <p className="eyebrow">How it gets made</p>

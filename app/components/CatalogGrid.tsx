@@ -9,30 +9,39 @@ function money(amount: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount / 100);
 }
 
-export function CatalogGrid({ products }: { products: StoreProduct[] }) {
-  const categories = useMemo(
-    () => ["All", ...Array.from(new Set(products.map((product) => product.category)))],
-    [products],
-  );
+export function CatalogGrid({
+  products,
+  showFilters = true,
+}: {
+  products: StoreProduct[];
+  showFilters?: boolean;
+}) {
+  const categories = useMemo(() => {
+    const available = new Set(products.map((product) => product.category));
+    const preferred = ["Home", "Play", "Desk", "Gifts"].filter((item) => available.delete(item));
+    return ["All", ...preferred, ...available];
+  }, [products]);
   const [category, setCategory] = useState("All");
   const visible = category === "All" ? products : products.filter((product) => product.category === category);
 
   return (
     <>
-      <div className="filter-row" aria-label="Filter products by category">
-        {categories.map((item) => (
-          <button
-            className={category === item ? "selected" : ""}
-            key={item}
-            onClick={() => setCategory(item)}
-            type="button"
-            aria-pressed={category === item}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-      <div className="product-grid">
+      {showFilters ? (
+        <div className="filter-row" aria-label="Filter products by category">
+          {categories.map((item) => (
+            <button
+              className={category === item ? "selected" : ""}
+              key={item}
+              onClick={() => setCategory(item)}
+              type="button"
+              aria-pressed={category === item}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <div className={`product-grid product-count-${visible.length}`}>
         {visible.map((product) => {
           const price = Math.min(...product.variants.map((variant) => variant.unitAmount));
           return (

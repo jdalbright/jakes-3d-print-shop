@@ -3,21 +3,15 @@ import type Stripe from "stripe";
 import { buildColorHexes, normalizeProductImages, splitMetadata, textMetadata } from "./catalog-metadata";
 import { demoProducts } from "./demo-catalog";
 import { getStripe } from "./stripe";
-import type { CatalogResult, StoreProduct } from "./types";
+import type { CatalogResult, ProductLicenseStatus, StoreProduct } from "./types";
 
 const accents = ["clay", "ocean", "graphite", "moss", "rose", "yellow"];
-const demoImages: Record<string, string[]> = {
+const localProductImages: Record<string, string[]> = {
   "onami-2-headphone-stand": [
     "/products/onami-2-headphone-stand-hero-v3.png",
     "/products/onami-2-headphone-stand-rear-v3.png",
     "/products/onami-2-headphone-stand-detail-v3.png",
   ],
-  "wave-planter": ["/products/wave-planter-demo.png"],
-  "articulated-dragon": ["/products/articulated-dragon-demo.png"],
-  "controller-dock": ["/products/controller-dock-demo.png"],
-  "hex-catchall-tray": ["/products/hex-catchall-tray-demo.png"],
-  "book-nook-marker-set": ["/products/book-nook-markers-demo.png"],
-  "cable-comb-set": ["/products/cable-comb-set-demo.png"],
 };
 
 function boolMetadata(value: string | undefined, fallback = false) {
@@ -43,7 +37,7 @@ function productFromStripe(
       sizeLabel: price.metadata.size_label || price.nickname || (prices.length === 1 ? "Standard" : `Option ${priceIndex + 1}`),
       unitAmount: price.unit_amount ?? 0,
       currency: "usd" as const,
-      sku: price.lookup_key || price.metadata.variant_key || price.id,
+      sku: price.metadata.variant_key || price.lookup_key || price.id,
       dimensions: price.metadata.dimensions?.trim() || undefined,
     }))
     .sort((a, b) => a.unitAmount - b.unitAmount);
@@ -58,9 +52,16 @@ function productFromStripe(
 
   const slug = product.metadata.shop_slug || product.id;
   const isDemo = boolMetadata(product.metadata.demo);
+  const metadataLicenseStatus = product.metadata.license_status;
+  const licenseStatus: ProductLicenseStatus =
+    metadataLicenseStatus === "active" ||
+    metadataLicenseStatus === "expired" ||
+    metadataLicenseStatus === "not_required"
+      ? metadataLicenseStatus
+      : "pending";
   const accent = product.metadata.accent || accents[index % accents.length];
   const colors = splitMetadata(product.metadata.colors, ["As shown"]);
-  const fallbackImages = isDemo ? demoImages[slug] || [] : [];
+  const fallbackImages = localProductImages[slug] || [];
   const stripeImages = normalizeProductImages(product.images, null);
   const images = stripeImages.length ? stripeImages : fallbackImages;
   const description = product.description || "A small-batch 3D print made with care in Jake's studio.";
@@ -91,6 +92,10 @@ function productFromStripe(
     finish: textMetadata(product.metadata.finish, "Visible print layers, finished and checked by hand"),
     care: textMetadata(product.metadata.care, "Wipe clean with a soft, damp cloth and keep away from high heat"),
     leadTime: textMetadata(product.metadata.lead_time, defaultLeadTime),
+    designerName: product.metadata.designer_name?.trim() || undefined,
+    designerUrl: product.metadata.designer_url?.trim() || undefined,
+    sourceModelUrl: product.metadata.source_model_url?.trim() || undefined,
+    licenseStatus,
     variants,
     demo: isDemo,
   };

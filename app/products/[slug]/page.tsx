@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: product.name,
     description: product.description,
-    robots: product.demo ? { index: false, follow: false } : undefined,
+    robots: product.demo || product.licenseStatus !== "active" ? { index: false, follow: false } : undefined,
     openGraph: {
       title: product.name,
       description: product.description,
@@ -59,7 +59,7 @@ export default async function ProductPage({ params }: Props) {
     : product.stockStatus === "made_to_order"
       ? "https://schema.org/PreOrder"
       : "https://schema.org/InStock";
-  const structuredData = product.demo ? null : {
+  const structuredData = product.demo || product.licenseStatus !== "active" ? null : {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
@@ -86,13 +86,22 @@ export default async function ProductPage({ params }: Props) {
         />
       ) : null}
 
-      <div className="breadcrumbs"><Link href="/#shop">Shop</Link><span>/</span><span>{product.category}</span><span>/</span><span>{product.name}</span></div>
+      <div className="breadcrumbs"><Link href="/products">Products</Link><span>/</span><span>{product.category}</span><span>/</span><span>{product.name}</span></div>
       <div className="product-layout">
         <ProductGallery product={product} />
         <aside className="product-info">
           <p className="eyebrow">{product.category} · {product.demo ? "Demo listing" : "Small batch"}</p>
           <h1>{product.name}</h1>
           <p className="product-description">{product.description}</p>
+          {product.designerName ? (
+            <p className="designer-credit">
+              Original design by{" "}
+              {product.designerUrl ? (
+                <a href={product.designerUrl} rel="noreferrer" target="_blank">{product.designerName}</a>
+              ) : product.designerName}
+              . Printed and finished by Jake.
+            </p>
+          ) : null}
           <ProductConfigurator product={product} />
         </aside>
       </div>
@@ -141,7 +150,7 @@ export default async function ProductPage({ params }: Props) {
         <section className="related-products" aria-labelledby="related-products-title">
           <div className="section-heading">
             <div><p className="eyebrow">Keep browsing</p><h2 id="related-products-title">More from the print shelf.</h2></div>
-            <Link className="text-link" href="/#shop">View all prints <span aria-hidden="true">↗</span></Link>
+            <Link className="text-link" href="/products">View all prints <span aria-hidden="true">↗</span></Link>
           </div>
           <div className={`product-grid related-grid related-count-${related.length}`}>
             {related.map((item) => {

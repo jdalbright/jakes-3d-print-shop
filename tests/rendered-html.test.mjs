@@ -14,23 +14,36 @@ async function render(pathname = "/") {
   );
 }
 
-test("server-renders the complete test storefront", async () => {
+test("server-renders the Onami storefront without retired demo products", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Jake’s 3D Print Shop/);
-  assert.match(html, /Useful things/);
+  assert.match(html, /A cleaner desk/);
   assert.match(html, /Test shop/);
-  assert.match(html, /Wave Planter/);
-  assert.match(html, /wave-planter-demo\.png/);
+  assert.match(html, /Onami 2 Headphone Stand/);
+  assert.match(html, /First off the bench/);
+  assert.match(html, /View product/);
+  assert.match(html, /onami-2-headphone-stand-hero-v3\.png/);
   assert.match(html, /Local pickup/);
+  assert.doesNotMatch(html, /Wave Planter|Articulated Dragon|Controller Dock|Hex Catchall Tray|Book Nook Markers|Cable Comb Set/);
   assert.doesNotMatch(html, /Studio favorites|Room for a good idea|Good ideas/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/);
 });
 
+test("server-renders the one-product catalog without unnecessary filters", async () => {
+  const response = await render("/products");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Current print\./);
+  assert.match(html, /Onami 2 Headphone Stand/);
+  assert.doesNotMatch(html, /Wave Planter|Articulated Dragon|Controller Dock|Hex Catchall Tray|Book Nook Markers|Cable Comb Set/);
+  assert.doesNotMatch(html, /aria-label="Filter products by category"/);
+});
+
 test("server-renders product and policy routes", async () => {
   const [product, policy] = await Promise.all([
-    render("/products/wave-planter"),
+    render("/products/onami-2-headphone-stand"),
     render("/policies/shipping"),
   ]);
   assert.equal(product.status, 200);
@@ -39,8 +52,10 @@ test("server-renders product and policy routes", async () => {
   assert.match(productHtml, /Add to cart/);
   assert.match(productHtml, /Why this print works/);
   assert.match(productHtml, /Print details/);
-  assert.match(productHtml, /Plant-based PLA/);
-  assert.match(productHtml, /More from the print shelf/);
+  assert.match(productHtml, /Matte PLA/);
+  assert.match(productHtml, /Original design by/);
+  assert.match(productHtml, /Meyui/);
+  assert.doesNotMatch(productHtml, /More from the print shelf/);
   assert.match(productHtml, /Demo listing/);
   assert.match(await policy.text(), /Shipping &amp; pickup/);
 });
@@ -74,7 +89,7 @@ test("product UI includes accessible gallery and aligned purchase controls", asy
   assert.match(configurator, /variant\.dimensions/);
   assert.match(configurator, /mobile-buy-bar/);
   assert.match(page, /application\/ld\+json/);
-  assert.match(page, /product\.demo \? \{ index: false/);
+  assert.match(page, /product\.demo \|\| product\.licenseStatus !== "active"/);
   assert.match(page, /item\.stockStatus !== "sold_out"/);
 });
 
@@ -90,6 +105,7 @@ test("checkout keeps prices authoritative and secrets server-only", async () => 
   assert.match(checkout, /subtotal >= 5000 \? 0 : 600/);
   assert.match(checkout, /allowed_countries: \["US"/);
   assert.match(checkout, /fulfillment_method/);
+  assert.match(checkout, /license_status !== "active"/);
   assert.doesNotMatch(shell, /STRIPE_SECRET_KEY/);
   assert.match(stripe, /process\.env\.STRIPE_SECRET_KEY/);
   assert.match(stripe, /STORE_LIVE_MODE/);
@@ -101,6 +117,9 @@ test("catalog seeding is test-mode only and idempotent", async () => {
   assert.match(seed, /metadata\['seed_key'\]/);
   assert.match(seed, /lookup_keys/);
   assert.match(seed, /storefront: "true"/);
+  assert.match(seed, /demo: "false"/);
+  assert.match(seed, /retiredSeedKeys/);
+  assert.match(seed, /active: false/);
   assert.match(seed, /color_hexes/);
   assert.match(seed, /detail_copy/);
   assert.match(seed, /dimensions/);

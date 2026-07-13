@@ -13,14 +13,14 @@ export const metadata: Metadata = {
   description: "Useful objects, playful details, and small-batch 3D prints made one layer at a time.",
   openGraph: {
     title: "Jake’s 3D Print Shop",
-    description: "Useful things, made one layer at a time. Small-batch 3D prints for desks, shelves, and everyday fixes.",
+    description: "Small-batch 3D prints made locally, starting with the Onami 2 Headphone Stand.",
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Jake's 3D Print Shop" }],
+    images: [{ url: "/products/onami-2-headphone-stand-hero-v3.png", alt: "Onami 2 Headphone Stand in slate blue" }],
   },
   twitter: {
     card: "summary_large_image",
-    description: "Useful things, made one layer at a time. Small-batch 3D prints for desks, shelves, and everyday fixes.",
-    images: ["/og.png"],
+    description: "Small-batch 3D prints made locally, starting with the Onami 2 Headphone Stand.",
+    images: ["/products/onami-2-headphone-stand-hero-v3.png"],
   },
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { getStripe } from "../../lib/stripe";
+import { getStripe, isLiveLaunchEnabled } from "../../lib/stripe";
 import type { Fulfillment } from "../../lib/types";
 
 type CheckoutItem = { priceId: string; quantity: number; color: string };
@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       const colors = (product.metadata.colors || "As shown").split(/[|,]/).map((color) => color.trim().toLowerCase());
       if (!colors.includes(item.color.toLowerCase())) throw new Error("invalid_color");
       if (product.metadata.stock_status === "sold_out") throw new Error("sold_out");
+      if (isLiveLaunchEnabled() && product.metadata.license_status !== "active") throw new Error("license_unavailable");
       if (body.fulfillment === "shipping" && !metadataBool(product.metadata.ship)) throw new Error("shipping_unavailable");
       if (body.fulfillment === "pickup" && !metadataBool(product.metadata.pickup)) throw new Error("pickup_unavailable");
       subtotal += price.unit_amount * item.quantity;
@@ -118,6 +119,8 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : "";
     const userMessage = message === "sold_out"
       ? "An item in your cart just sold out."
+      : message === "license_unavailable"
+        ? "This product is not available for live checkout yet."
       : message.includes("unavailable")
         ? "An item is not available for the selected fulfillment method."
         : message === "invalid_color" || message === "invalid_price"
