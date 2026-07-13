@@ -63,3 +63,16 @@ test("catalog seeding is test-mode only and idempotent", async () => {
   assert.match(seed, /storefront: "true"/);
   assert.match(seed, /Stripe test catalog ready/);
 });
+
+test("webhook verifies the raw Stripe signature and handles checkout outcomes", async () => {
+  const webhook = await readFile(new URL("../app/api/stripe/webhook/route.ts", import.meta.url), "utf8");
+  assert.match(webhook, /process\.env\.STRIPE_WEBHOOK_SECRET/);
+  assert.match(webhook, /request\.text\(\)/);
+  assert.match(webhook, /request\.headers\.get\("stripe-signature"\)/);
+  assert.match(webhook, /constructEventAsync/);
+  assert.match(webhook, /Stripe\.createSubtleCryptoProvider\(\)/);
+  assert.match(webhook, /checkout\.session\.completed/);
+  assert.match(webhook, /checkout\.session\.async_payment_succeeded/);
+  assert.match(webhook, /checkout\.session\.async_payment_failed/);
+  assert.doesNotMatch(webhook, /customer_details|shipping_details/);
+});

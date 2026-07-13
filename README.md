@@ -24,6 +24,18 @@ npm run stripe:seed
 
 The seeder is idempotent and refuses live keys. It creates Stripe Products and one-time USD Prices with the metadata contract the storefront expects.
 
+## Stripe webhook
+
+The shop accepts signed Stripe events at `/api/stripe/webhook`. Configure the endpoint to send:
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+
+Copy the endpoint signing secret into `STRIPE_WEBHOOK_SECRET`. Use the Stripe CLI signing secret for local forwarding and the Dashboard endpoint signing secret for the hosted site; they are different secrets.
+
+The webhook records payment state without logging customer names, email addresses, phone numbers, or shipping addresses. Fulfillment remains managed manually in Stripe Dashboard for v1.
+
 ## Stripe catalog metadata
 
 Active products appear only when `storefront=true`. Supported Product metadata:
@@ -39,6 +51,7 @@ Use one-time USD Prices for size variants. Price metadata supports `size_label` 
 
 - The server validates every Price and Product directly with Stripe; browser-provided amounts are ignored.
 - A live Stripe key is rejected unless `STORE_LIVE_MODE=true` is also set.
+- Webhook requests are rejected unless their raw request body has a valid Stripe signature.
 - Do not enable live mode until real photos/listings, contact details, tax registrations, policies, and a full live checkout test are complete.
 - Runtime secrets belong in Sites environment variables, never committed files.
 
