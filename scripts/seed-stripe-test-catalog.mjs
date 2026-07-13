@@ -18,6 +18,13 @@ const stripe = new Stripe(secretKey, {
 
 const catalog = [
   {
+    seedKey: "jakes-v1-onami-2-headphone-stand",
+    name: "Onami 2 Headphone Stand",
+    description: "A wave-inspired headphone stand designed by Meyui, printed and finished in Jake's studio with a broad curved cradle for steady everyday support.",
+    metadata: { shop_slug: "onami-2-headphone-stand", category: "Desk", colors: "Deep Ocean|Graphite|Warm Sand", color_hexes: "#1f5681|#414844|#cdbb97", featured: "true", pickup: "true", ship: "true", stock_status: "made_to_order", accent: "ocean", detail_copy: "Designed by Meyui. This private test listing will only be enabled for public sales under an active commercial license. Onami 2 pairs a layered, ocean-wave silhouette with a wider rounded top that distributes pressure across a headphone headband more evenly.", highlights: "Broad rounded headband support|Layered wave-inspired silhouette|Stable desktop footprint|Optional silicone feet", material: "Matte PLA selected for a clean, durable desk finish", finish: "Fine visible print layers with hand-checked support surfaces", care: "Wipe clean with a soft, damp cloth. Keep away from high heat and direct sunlight for extended periods.", lead_time: "Printed to order in 3–5 business days", designer_name: "Meyui", designer_url: "https://makerworld.com/en/@Meyui", source_model_url: "https://makerworld.com/en/models/2979027-onami-2-headphone-stand#profileId-3342100", license_status: "pending_confirmation" },
+    variants: [["Standard", 3400, "ONAMI2-STD"]],
+  },
+  {
     seedKey: "jakes-v1-wave-planter",
     name: "Wave Planter",
     description: "A softly ribbed desktop planter with a watertight liner and a layered finish that catches the light.",
@@ -97,6 +104,11 @@ for (const item of catalog) {
     const lookupKey = `jakes_demo_${String(sku).toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
     const existing = await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 });
     let price = existing.data[0];
+    const priceMetadata = {
+      size_label: sizeLabel,
+      variant_key: sku,
+      ...(dimensions ? { dimensions } : {}),
+    };
 
     if (price) {
       if (price.product !== product.id || price.unit_amount !== unitAmount || price.currency !== "usd" || price.type !== "one_time") {
@@ -104,7 +116,7 @@ for (const item of catalog) {
       }
       await stripe.prices.update(price.id, {
         nickname: sizeLabel,
-        metadata: { size_label: sizeLabel, variant_key: sku, dimensions },
+        metadata: priceMetadata,
       });
       pricesReused += 1;
     } else {
@@ -114,7 +126,7 @@ for (const item of catalog) {
         unit_amount: unitAmount,
         lookup_key: lookupKey,
         nickname: sizeLabel,
-        metadata: { size_label: sizeLabel, variant_key: sku, dimensions },
+        metadata: priceMetadata,
       });
       pricesCreated += 1;
     }

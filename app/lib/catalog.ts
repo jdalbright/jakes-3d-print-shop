@@ -6,13 +6,18 @@ import { getStripe } from "./stripe";
 import type { CatalogResult, StoreProduct } from "./types";
 
 const accents = ["clay", "ocean", "graphite", "moss", "rose", "yellow"];
-const demoImages: Record<string, string> = {
-  "wave-planter": "/products/wave-planter-demo.png",
-  "articulated-dragon": "/products/articulated-dragon-demo.png",
-  "controller-dock": "/products/controller-dock-demo.png",
-  "hex-catchall-tray": "/products/hex-catchall-tray-demo.png",
-  "book-nook-marker-set": "/products/book-nook-markers-demo.png",
-  "cable-comb-set": "/products/cable-comb-set-demo.png",
+const demoImages: Record<string, string[]> = {
+  "onami-2-headphone-stand": [
+    "/products/onami-2-headphone-stand-hero-v2.png",
+    "/products/onami-2-headphone-stand-catalog-v2.png",
+    "/products/onami-2-headphone-stand-detail-v2.png",
+  ],
+  "wave-planter": ["/products/wave-planter-demo.png"],
+  "articulated-dragon": ["/products/articulated-dragon-demo.png"],
+  "controller-dock": ["/products/controller-dock-demo.png"],
+  "hex-catchall-tray": ["/products/hex-catchall-tray-demo.png"],
+  "book-nook-marker-set": ["/products/book-nook-markers-demo.png"],
+  "cable-comb-set": ["/products/cable-comb-set-demo.png"],
 };
 
 function boolMetadata(value: string | undefined, fallback = false) {
@@ -55,8 +60,9 @@ function productFromStripe(
   const isDemo = boolMetadata(product.metadata.demo);
   const accent = product.metadata.accent || accents[index % accents.length];
   const colors = splitMetadata(product.metadata.colors, ["As shown"]);
-  const fallbackImage = isDemo ? demoImages[slug] : null;
-  const images = normalizeProductImages(product.images, fallbackImage);
+  const fallbackImages = isDemo ? demoImages[slug] || [] : [];
+  const stripeImages = normalizeProductImages(product.images, null);
+  const images = stripeImages.length ? stripeImages : fallbackImages;
   const description = product.description || "A small-batch 3D print made with care in Jake's studio.";
   const defaultLeadTime = stockStatus === "sold_out"
     ? "Currently unavailable"
