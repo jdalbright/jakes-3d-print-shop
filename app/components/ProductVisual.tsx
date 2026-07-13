@@ -1,6 +1,8 @@
 import type { StoreProduct } from "../lib/types";
 
-export function ProductVisual({ product, detail = false }: { product: StoreProduct; detail?: boolean }) {
+type VisualProduct = Pick<StoreProduct, "name" | "image" | "accent">;
+
+export function ProductVisual({ product, detail = false }: { product: VisualProduct; detail?: boolean }) {
   if (product.image) {
     return (
       <div className={`product-visual image-visual accent-${product.accent} ${detail ? "detail" : ""}`}>

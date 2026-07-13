@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { buildColorHexes, normalizeProductImages, splitMetadata } from "../app/lib/catalog-metadata.ts";
 
 async function render(pathname = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -34,8 +35,47 @@ test("server-renders product and policy routes", async () => {
   ]);
   assert.equal(product.status, 200);
   assert.equal(policy.status, 200);
-  assert.match(await product.text(), /Add to cart/);
+  const productHtml = await product.text();
+  assert.match(productHtml, /Add to cart/);
+  assert.match(productHtml, /Why this print works/);
+  assert.match(productHtml, /Print details/);
+  assert.match(productHtml, /Plant-based PLA/);
+  assert.match(productHtml, /More from the print shelf/);
+  assert.match(productHtml, /Demo listing/);
   assert.match(await policy.text(), /Shipping &amp; pickup/);
+});
+
+test("catalog metadata normalizes galleries and swatches safely", () => {
+  assert.deepEqual(
+    normalizeProductImages([" https://example.com/a.jpg ", "https://example.com/a.jpg", ""], "/fallback.png"),
+    ["https://example.com/a.jpg"],
+  );
+  assert.deepEqual(normalizeProductImages([], "/fallback.png"), ["/fallback.png"]);
+  assert.deepEqual(normalizeProductImages([], null), []);
+  assert.deepEqual(splitMetadata("One | Two,, Three", []), ["One", "Two", "Three"]);
+  assert.deepEqual(
+    buildColorHexes(["Terracotta", "Unknown", "Ocean"], "#ABCDEF|not-a-hex", "moss"),
+    ["#abcdef", "#8b9d78", "#3e7484"],
+  );
+});
+
+test("product UI includes accessible gallery and aligned purchase controls", async () => {
+  const [gallery, configurator, page] = await Promise.all([
+    readFile(new URL("../app/components/ProductGallery.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ProductConfigurator.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/products/[slug]/page.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(gallery, /<dialog/);
+  assert.match(gallery, /showModal/);
+  assert.match(gallery, /onClose=.*focus/);
+  assert.match(gallery, /aria-current/);
+  assert.match(configurator, /product\.colorHexes/);
+  assert.match(configurator, /length: 10/);
+  assert.match(configurator, /variant\.dimensions/);
+  assert.match(configurator, /mobile-buy-bar/);
+  assert.match(page, /application\/ld\+json/);
+  assert.match(page, /product\.demo \? \{ index: false/);
+  assert.match(page, /item\.stockStatus !== "sold_out"/);
 });
 
 test("checkout keeps prices authoritative and secrets server-only", async () => {
@@ -61,6 +101,10 @@ test("catalog seeding is test-mode only and idempotent", async () => {
   assert.match(seed, /metadata\['seed_key'\]/);
   assert.match(seed, /lookup_keys/);
   assert.match(seed, /storefront: "true"/);
+  assert.match(seed, /color_hexes/);
+  assert.match(seed, /detail_copy/);
+  assert.match(seed, /dimensions/);
+  assert.match(seed, /stripe\.prices\.update/);
   assert.match(seed, /Stripe test catalog ready/);
 });
 

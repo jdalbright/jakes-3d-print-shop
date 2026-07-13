@@ -41,11 +41,13 @@ The webhook records payment state without logging customer names, email addresse
 Active products appear only when `storefront=true`. Supported Product metadata:
 
 - `shop_slug`, `category`, `colors` (pipe- or comma-separated)
+- `color_hexes` (pipe-separated six-digit hex values aligned with `colors`)
 - `featured`, `pickup`, `ship`, `demo`
 - `stock_status`: `in_stock`, `made_to_order`, or `sold_out`
 - `accent`: `clay`, `ocean`, `graphite`, `moss`, `rose`, or `yellow`
+- `detail_copy`, `highlights` (pipe-separated), `material`, `finish`, `care`, and `lead_time`
 
-Use one-time USD Prices for size variants. Price metadata supports `size_label` and `variant_key`; `lookup_key` is used as the stable SKU.
+Use Stripe Product images for the product gallery; the first image is the catalog-card image. Use one-time USD Prices for size variants. Price metadata supports `size_label`, `variant_key`, and `dimensions`; `lookup_key` is used as the stable SKU.
 
 ## Safety and launch
 

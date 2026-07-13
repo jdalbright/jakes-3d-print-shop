@@ -6,6 +6,7 @@ export type ProductVariant = {
   unitAmount: number;
   currency: "usd";
   sku: string;
+  dimensions?: string;
 };
 
 export type StoreProduct = {
@@ -20,7 +21,15 @@ export type StoreProduct = {
   ship: boolean;
   stockStatus: "in_stock" | "made_to_order" | "sold_out";
   image: string | null;
+  images: string[];
   accent: string;
+  colorHexes: string[];
+  detailCopy: string;
+  highlights: string[];
+  material: string;
+  finish: string;
+  care: string;
+  leadTime: string;
   variants: ProductVariant[];
   demo?: boolean;
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { StoreProduct } from "../lib/types";
 import { useStore } from "./StoreShell";
@@ -71,17 +72,24 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
               type="button"
               aria-label={`Choose ${item}`}
               aria-pressed={color === item}
-              style={{ "--swatch-index": index } as React.CSSProperties}
-            ><i aria-hidden="true" /></button>
+            >
+              <i aria-hidden="true" style={{ backgroundColor: product.colorHexes[index] || "#7c827d" }} />
+              <span>{item}</span>
+            </button>
           ))}
         </div>
       </fieldset>
+
+      <dl className="variant-specs" aria-live="polite">
+        <div><dt>SKU</dt><dd>{variant.sku}</dd></div>
+        <div><dt>Dimensions</dt><dd>{variant.dimensions || "See size label"}</dd></div>
+      </dl>
 
       <div className="buy-row">
         <label>
           <span>Quantity</span>
           <select value={quantity} onChange={(event) => setQuantity(Number(event.target.value))}>
-            {[1, 2, 3, 4, 5].map((item) => <option key={item}>{item}</option>)}
+            {Array.from({ length: 10 }, (_, index) => index + 1).map((item) => <option key={item}>{item}</option>)}
           </select>
         </label>
         <button className="primary-button" disabled={soldOut} onClick={addToCart} type="button">
@@ -91,7 +99,15 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
       <div className="fulfillment-chips">
         {product.ship ? <span>U.S. shipping</span> : null}
         {product.pickup ? <span>Free local pickup</span> : null}
-        <span>Stripe checkout</span>
+        <span>Secure Stripe checkout</span>
+      </div>
+      {added ? <Link className="added-link" href="/cart">View cart</Link> : null}
+
+      <div className="mobile-buy-bar">
+        <span><small>{variant.sizeLabel}</small><strong>{money(variant.unitAmount)}</strong></span>
+        <button className="primary-button" disabled={soldOut} onClick={addToCart} type="button">
+          {soldOut ? "Sold out" : added ? "Added" : "Add to cart"}
+        </button>
       </div>
     </div>
   );

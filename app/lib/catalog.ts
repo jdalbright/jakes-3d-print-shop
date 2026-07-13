@@ -1,5 +1,6 @@
 import "server-only";
 import type Stripe from "stripe";
+import { buildColorHexes, normalizeProductImages, splitMetadata, textMetadata } from "./catalog-metadata";
 import { demoProducts } from "./demo-catalog";
 import { getStripe } from "./stripe";
 import type { CatalogResult, StoreProduct } from "./types";
@@ -13,14 +14,6 @@ const demoImages: Record<string, string> = {
   "book-nook-marker-set": "/products/book-nook-markers-demo.png",
   "cable-comb-set": "/products/cable-comb-set-demo.png",
 };
-
-function splitMetadata(value: string | undefined, fallback: string[]) {
-  if (!value) return fallback;
-  return value
-    .split(/[|,]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
 
 function boolMetadata(value: string | undefined, fallback = false) {
   if (value === undefined) return fallback;
@@ -46,6 +39,7 @@ function productFromStripe(
       unitAmount: price.unit_amount ?? 0,
       currency: "usd" as const,
       sku: price.lookup_key || price.metadata.variant_key || price.id,
+      dimensions: price.metadata.dimensions?.trim() || undefined,
     }))
     .sort((a, b) => a.unitAmount - b.unitAmount);
 
@@ -59,20 +53,38 @@ function productFromStripe(
 
   const slug = product.metadata.shop_slug || product.id;
   const isDemo = boolMetadata(product.metadata.demo);
+  const accent = product.metadata.accent || accents[index % accents.length];
+  const colors = splitMetadata(product.metadata.colors, ["As shown"]);
+  const fallbackImage = isDemo ? demoImages[slug] : null;
+  const images = normalizeProductImages(product.images, fallbackImage);
+  const description = product.description || "A small-batch 3D print made with care in Jake's studio.";
+  const defaultLeadTime = stockStatus === "sold_out"
+    ? "Currently unavailable"
+    : stockStatus === "in_stock"
+      ? "Usually ready in 1–3 business days"
+      : "Usually ready in 3–5 business days";
 
   return {
     id: product.id,
     slug,
     name: product.name,
-    description: product.description || "A small-batch 3D print made with care in Jake's studio.",
+    description,
     category: product.metadata.category || "Prints",
-    colors: splitMetadata(product.metadata.colors, ["As shown"]),
+    colors,
     featured: boolMetadata(product.metadata.featured),
     pickup: boolMetadata(product.metadata.pickup, true),
     ship: boolMetadata(product.metadata.ship, true),
     stockStatus,
-    image: product.images[0] || (isDemo ? demoImages[slug] : null) || null,
-    accent: product.metadata.accent || accents[index % accents.length],
+    image: images[0] || null,
+    images,
+    accent,
+    colorHexes: buildColorHexes(colors, product.metadata.color_hexes, accent),
+    detailCopy: textMetadata(product.metadata.detail_copy, description),
+    highlights: splitMetadata(product.metadata.highlights, []),
+    material: textMetadata(product.metadata.material, "PLA"),
+    finish: textMetadata(product.metadata.finish, "Visible print layers, finished and checked by hand"),
+    care: textMetadata(product.metadata.care, "Wipe clean with a soft, damp cloth and keep away from high heat"),
+    leadTime: textMetadata(product.metadata.lead_time, defaultLeadTime),
     variants,
     demo: isDemo,
   };
