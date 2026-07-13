@@ -8,9 +8,9 @@ import type { CatalogResult, StoreProduct } from "./types";
 const accents = ["clay", "ocean", "graphite", "moss", "rose", "yellow"];
 const demoImages: Record<string, string[]> = {
   "onami-2-headphone-stand": [
-    "/products/onami-2-headphone-stand-hero-v2.png",
-    "/products/onami-2-headphone-stand-catalog-v2.png",
-    "/products/onami-2-headphone-stand-detail-v2.png",
+    "/products/onami-2-headphone-stand-hero-v3.png",
+    "/products/onami-2-headphone-stand-rear-v3.png",
+    "/products/onami-2-headphone-stand-detail-v3.png",
   ],
   "wave-planter": ["/products/wave-planter-demo.png"],
   "articulated-dragon": ["/products/articulated-dragon-demo.png"],
