@@ -19,7 +19,7 @@ export default async function Home() {
     <>
       <section className="hero-section">
         <div className="hero-copy">
-          <p className="eyebrow hero-kicker">Jake’s workbench / licensed small-batch print</p>
+          <p className="eyebrow hero-kicker">Jake’s workbench / small-batch maker studio</p>
           <h1>A cleaner desk, one layer at a time.</h1>
           <p className="hero-deck">
             Meet the Onami 2 Headphone Stand: a calm wave-inspired form, printed to order and finished by hand in Jake’s studio.
