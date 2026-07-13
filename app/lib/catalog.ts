@@ -12,6 +12,11 @@ const localProductImages: Record<string, string[]> = {
     "/products/onami-2-headphone-stand-rear-v3.png",
     "/products/onami-2-headphone-stand-detail-v3.png",
   ],
+  "japandi-paper-towel-holder": [
+    "/products/japandi-paper-towel-holder-hero-v1.png",
+    "/products/japandi-paper-towel-holder-empty-v1.png",
+    "/products/japandi-paper-towel-holder-detail-v1.png",
+  ],
 };
 
 function boolMetadata(value: string | undefined, fallback = false) {

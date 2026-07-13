@@ -44,6 +44,36 @@ const catalog = [
     },
     variants: [["Standard", 3400, "ONAMI2-STD"]],
   },
+  {
+    seedKey: "jakes-v1-japandi-paper-towel-holder",
+    name: "Japandi Paper Towel Holder",
+    description: "A sculptural countertop holder that keeps a paper towel roll contained while leaving the next sheet easy to reach.",
+    metadata: {
+      shop_slug: "japandi-paper-towel-holder",
+      category: "Home",
+      colors: "Warm Sand|Cocoa|Matte White",
+      color_hexes: "#cbb89d|#705546|#ece8df",
+      featured: "true",
+      pickup: "true",
+      ship: "true",
+      stock_status: "made_to_order",
+      accent: "clay",
+      detail_copy: "The Japandi holder turns an everyday kitchen roll into a calmer countertop object. Its ribbed outer sleeve adds grip and texture, while the open front keeps the working edge visible and accessible.",
+      highlights: "Open front keeps the next sheet within reach|Ribbed sleeve gives the roll a finished silhouette|Standard and XL options for different roll sizes|Optional foam feet can add countertop grip",
+      material: "Matte PLA",
+      finish: "Fine vertical ribbing with hand-checked edges and surfaces",
+      care: "Wipe with a soft, damp cloth. Do not place in a dishwasher or near sustained heat.",
+      lead_time: "Printed to order in 3–5 business days",
+      designer_name: "SabreDesign",
+      designer_url: "https://makerworld.com/en/@SabreDesign",
+      source_model_url: "https://makerworld.com/en/models/1455387-paper-towel-holder-stand-japandi#profileId-1516726",
+      license_status: "pending_confirmation",
+    },
+    variants: [
+      ["Standard", 3500, "JPT-STANDARD", "Fits rolls up to 4.4 in diameter · 7 in tall"],
+      ["XL", 4500, "JPT-XL", "Fits rolls up to 5.9 in diameter · 7.6 in tall"],
+    ],
+  },
 ];
 
 const retiredSeedKeys = [

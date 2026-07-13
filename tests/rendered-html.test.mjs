@@ -14,7 +14,7 @@ async function render(pathname = "/") {
   );
 }
 
-test("server-renders the Onami storefront without retired demo products", async () => {
+test("server-renders the current storefront without retired demo products", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
@@ -22,41 +22,54 @@ test("server-renders the Onami storefront without retired demo products", async 
   assert.match(html, /A cleaner desk/);
   assert.match(html, /Test shop/);
   assert.match(html, /Onami 2 Headphone Stand/);
-  assert.match(html, /First off the bench/);
-  assert.match(html, /View product/);
+  assert.match(html, /Japandi Paper Towel Holder/);
+  assert.match(html, /Fresh off the bench/);
+  assert.match(html, /View all products/);
   assert.match(html, /onami-2-headphone-stand-hero-v3\.png/);
+  assert.match(html, /japandi-paper-towel-holder-hero-v1\.png/);
   assert.match(html, /Local pickup/);
   assert.doesNotMatch(html, /Wave Planter|Articulated Dragon|Controller Dock|Hex Catchall Tray|Book Nook Markers|Cable Comb Set/);
   assert.doesNotMatch(html, /Studio favorites|Room for a good idea|Good ideas/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/);
 });
 
-test("server-renders the one-product catalog without unnecessary filters", async () => {
+test("server-renders the two-product catalog with useful filters", async () => {
   const response = await render("/products");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Current print\./);
+  assert.match(html, /Current prints\./);
   assert.match(html, /Onami 2 Headphone Stand/);
+  assert.match(html, /Japandi Paper Towel Holder/);
   assert.doesNotMatch(html, /Wave Planter|Articulated Dragon|Controller Dock|Hex Catchall Tray|Book Nook Markers|Cable Comb Set/);
-  assert.doesNotMatch(html, /aria-label="Filter products by category"/);
+  assert.match(html, /aria-label="Filter products by category"/);
 });
 
-test("server-renders product and policy routes", async () => {
-  const [product, policy] = await Promise.all([
+test("server-renders both product pages and policy routes", async () => {
+  const [product, paperHolder, policy] = await Promise.all([
     render("/products/onami-2-headphone-stand"),
+    render("/products/japandi-paper-towel-holder"),
     render("/policies/shipping"),
   ]);
   assert.equal(product.status, 200);
+  assert.equal(paperHolder.status, 200);
   assert.equal(policy.status, 200);
   const productHtml = await product.text();
+  const paperHolderHtml = await paperHolder.text();
   assert.match(productHtml, /Add to cart/);
   assert.match(productHtml, /Why this print works/);
   assert.match(productHtml, /Print details/);
   assert.match(productHtml, /Matte PLA/);
   assert.match(productHtml, /Original design by/);
   assert.match(productHtml, /Meyui/);
-  assert.doesNotMatch(productHtml, /More from the print shelf/);
+  assert.match(productHtml, /More from the print shelf/);
   assert.match(productHtml, /Demo listing/);
+  assert.match(paperHolderHtml, /Japandi Paper Towel Holder/);
+  assert.match(paperHolderHtml, /SabreDesign/);
+  assert.match(paperHolderHtml, /Standard/);
+  assert.match(paperHolderHtml, /XL/);
+  assert.match(paperHolderHtml, /Fits rolls up to 5\.9 in diameter/);
+  assert.match(paperHolderHtml, /japandi-paper-towel-holder-empty-v1\.png/);
+  assert.match(paperHolderHtml, /Demo listing/);
   assert.match(await policy.text(), /Shipping &amp; pickup/);
 });
 
@@ -119,6 +132,9 @@ test("catalog seeding is test-mode only and idempotent", async () => {
   assert.match(seed, /storefront: "true"/);
   assert.match(seed, /demo: "false"/);
   assert.match(seed, /retiredSeedKeys/);
+  assert.match(seed, /jakes-v1-japandi-paper-towel-holder/);
+  assert.match(seed, /JPT-STANDARD/);
+  assert.match(seed, /JPT-XL/);
   assert.match(seed, /active: false/);
   assert.match(seed, /color_hexes/);
   assert.match(seed, /detail_copy/);

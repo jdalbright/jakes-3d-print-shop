@@ -10,7 +10,7 @@ export default async function Home() {
   const { products } = await getCatalog();
   const featuredProducts = products.filter((product) => product.featured);
   const popularProducts = (featuredProducts.length ? featuredProducts : products).slice(0, 3);
-  const primaryProduct = popularProducts[0];
+  const primaryProduct = products.find((product) => product.slug === "onami-2-headphone-stand") || popularProducts[0];
   const primaryPrice = primaryProduct
     ? Math.min(...primaryProduct.variants.map((variant) => variant.unitAmount))
     : 0;
@@ -51,10 +51,10 @@ export default async function Home() {
 
       <section className="shop-section" id="shop">
         <div className="section-heading">
-          <div><p className="eyebrow">The print shelf</p><h2>First off the bench.</h2></div>
+          <div><p className="eyebrow">The print shelf</p><h2>Fresh off the bench.</h2></div>
           <div className="section-heading-side">
-            <p>One focused product while Jake finishes testing the next additions.</p>
-            <Link className="text-link" href="/products/onami-2-headphone-stand">View product <span aria-hidden="true">→</span></Link>
+            <p>Two carefully selected designs, printed to order and finished in Jake’s studio.</p>
+            <Link className="text-link" href="/products">View all products <span aria-hidden="true">→</span></Link>
           </div>
         </div>
         <CatalogGrid products={popularProducts} showFilters={false} />
