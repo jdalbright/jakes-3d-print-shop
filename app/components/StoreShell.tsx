@@ -117,7 +117,9 @@ export function StoreShell({
       {testMode ? (
         <div className="test-banner" role="status">
           <span className="status-dot" aria-hidden="true" />
-          Test shop · demo products · no live charges
+          {checkoutEnabled
+            ? "Stripe sandbox · test cards only · no live charges"
+            : "Test shop · demo products · no live charges"}
         </div>
       ) : null}
       <header className="site-header">
