@@ -1,9 +1,9 @@
 import "server-only";
 import type Stripe from "stripe";
 import { buildColorHexes, normalizeProductImages, splitMetadata, textMetadata } from "./catalog-metadata";
-import { demoProducts } from "./demo-catalog";
+import { demoProducts, officeDemoProducts } from "./demo-catalog";
 import { getStripe } from "./stripe";
-import type { CatalogResult, ProductLicenseStatus, StoreProduct } from "./types";
+import type { CatalogResult, CatalogVisibility, OfficeFulfillment, ProductLicenseStatus, StoreProduct } from "./types";
 
 const accents = ["clay", "ocean", "graphite", "moss", "rose", "yellow"];
 const localProductImages: Record<string, string[]> = {
@@ -55,6 +55,12 @@ function productFromStripe(
       ? stock
       : "made_to_order";
 
+  const visibility: CatalogVisibility = product.metadata.visibility === "office" ? "office" : "public";
+  const officeFulfillment: OfficeFulfillment | undefined =
+    product.metadata.office_fulfillment === "take_now" || product.metadata.office_fulfillment === "work_delivery"
+      ? product.metadata.office_fulfillment
+      : undefined;
+
   const slug = product.metadata.shop_slug || product.id;
   const isDemo = boolMetadata(product.metadata.demo);
   const metadataLicenseStatus = product.metadata.license_status;
@@ -87,12 +93,16 @@ function productFromStripe(
     pickup: boolMetadata(product.metadata.pickup, true),
     ship: boolMetadata(product.metadata.ship, true),
     stockStatus,
+    visibility,
+    officeFulfillment,
+    photoReady: product.metadata.photo_status === "ready",
     image: images[0] || null,
     images,
     accent,
     colorHexes: buildColorHexes(colors, product.metadata.color_hexes, accent),
     detailCopy: textMetadata(product.metadata.detail_copy, description),
     highlights: splitMetadata(product.metadata.highlights, []),
+    fitNote: product.metadata.fit_note?.trim() || undefined,
     material: textMetadata(product.metadata.material, "PLA"),
     finish: textMetadata(product.metadata.finish, "Visible print layers, finished and checked by hand"),
     care: textMetadata(product.metadata.care, "Wipe clean with a soft, damp cloth and keep away from high heat"),
@@ -106,10 +116,14 @@ function productFromStripe(
   };
 }
 
-export async function getCatalog(): Promise<CatalogResult> {
+export async function getCatalog(visibility: CatalogVisibility = "public"): Promise<CatalogResult> {
   const stripe = getStripe();
   if (!stripe) {
-    return { products: demoProducts, source: "demo", checkoutEnabled: false };
+    return {
+      products: visibility === "office" ? officeDemoProducts : demoProducts,
+      source: "demo",
+      checkoutEnabled: false,
+    };
   }
 
   try {
@@ -133,13 +147,22 @@ export async function getCatalog(): Promise<CatalogResult> {
           index,
         ),
       )
-      .filter((product): product is StoreProduct => product !== null);
+      .filter((product): product is StoreProduct => product !== null)
+      .filter((product) => product.visibility === visibility);
+
+    if (visibility === "office") {
+      return { products, source: "stripe", checkoutEnabled: true };
+    }
 
     return products.length
       ? { products, source: "stripe", checkoutEnabled: true }
       : { products: demoProducts, source: "demo", checkoutEnabled: false };
   } catch {
-    return { products: demoProducts, source: "demo", checkoutEnabled: false };
+    return {
+      products: visibility === "office" ? [] : demoProducts,
+      source: "demo",
+      checkoutEnabled: false,
+    };
   }
 }
 

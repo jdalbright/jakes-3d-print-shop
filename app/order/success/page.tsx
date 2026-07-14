@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type Stripe from "stripe";
 import { getStripe } from "../../lib/stripe";
+import { PICKUP_AREA } from "../../lib/store-config";
 
 export const metadata: Metadata = { title: "Order confirmation", robots: { index: false, follow: false } };
 
@@ -47,6 +48,8 @@ export default async function SuccessPage({ searchParams }: Props) {
 
   const paid = session.payment_status === "paid" || session.payment_status === "no_payment_required";
   const pickup = session.metadata?.fulfillment_method === "pickup";
+  const officeCheckout = session.metadata?.sales_channel === "office_nfc";
+  const officeFulfillment = session.metadata?.office_fulfillment;
 
   if (!paid) {
     return (
@@ -54,10 +57,25 @@ export default async function SuccessPage({ searchParams }: Props) {
         <p className="eyebrow">Payment pending</p>
         <h1>Your payment isn’t confirmed yet.</h1>
         <p>Stripe is still processing this payment. Check your email before trying again.</p>
-        <Link className="primary-button" href="/cart">Return to cart</Link>
+        <Link className="primary-button" href={officeCheckout ? "/office" : "/cart"}>{officeCheckout ? "Return to office page" : "Return to cart"}</Link>
       </section>
     );
   }
+
+  const fulfillmentLabel = officeCheckout
+    ? officeFulfillment === "take_now"
+      ? "Office rack"
+      : "Delivery at work"
+    : pickup
+      ? `${PICKUP_AREA} pickup`
+      : "U.S. shipping";
+  const nextMessage = officeCheckout
+    ? officeFulfillment === "take_now"
+      ? "Payment confirmed—take one available keychain from the rack. You do not need to show anyone this screen."
+      : "Jake will deliver your made-to-order set at work, usually within 3–5 business days."
+    : pickup
+      ? `Jake will email you to coordinate a private pickup handoff in ${PICKUP_AREA}.`
+      : "You’ll receive a receipt now and an update when your prints are ready to ship.";
 
   return (
     <section className="confirmation-page">
@@ -69,13 +87,13 @@ export default async function SuccessPage({ searchParams }: Props) {
       <div className="confirmation-card">
         <div><span>Order</span><b>{session.id.slice(-8).toUpperCase()}</b></div>
         <div><span>Total</span><b>{money(session.amount_total, session.currency)}</b></div>
-        <div><span>Fulfillment</span><b>{pickup ? "Local pickup" : "U.S. shipping"}</b></div>
+        <div><span>Fulfillment</span><b>{fulfillmentLabel}</b></div>
       </div>
       <div className="next-step">
         <span>Next</span>
-        <p>{pickup ? "Jake will email you to coordinate a private pickup handoff." : "You’ll receive a receipt now and an update when your prints are ready to ship."}</p>
+        <p>{nextMessage}</p>
       </div>
-      <Link className="text-link" href="/">Keep browsing <span aria-hidden="true">↗</span></Link>
+      <Link className="text-link" href={officeCheckout ? "/office" : "/"}>{officeCheckout ? "Back to the office page" : "Keep browsing"} <span aria-hidden="true">↗</span></Link>
     </section>
   );
 }

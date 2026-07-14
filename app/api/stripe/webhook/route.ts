@@ -55,6 +55,9 @@ export async function POST(request: Request) {
       sessionId: session.id,
       state,
       fulfillment: session.metadata?.fulfillment_method ?? "unknown",
+      salesChannel: session.metadata?.sales_channel ?? "storefront",
+      officeFulfillment: session.metadata?.office_fulfillment ?? "not_applicable",
+      firstItem: session.metadata?.item_1?.split("|")[0] ?? "unknown",
     });
   }
 

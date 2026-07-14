@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-labelledby="title">
+  <title id="title">Jake’s 3D Print Shop mark</title>
   <path fill="#1c241f" d="M4 4h27l-4 6H0l4-6Z"/>
   <path fill="#23627b" d="M6 13h26l-4 6H2l4-6Z"/>
   <path fill="#1c241f" d="M3 22h27l-4 6H0l3-6Z"/>

@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
+
+const shippingPrice = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(STANDARD_US_SHIPPING_CENTS / 100);
 
 const policies = {
   shipping: {
     title: "Shipping & pickup",
     intro: "A plain-language draft for test-shop review. Confirm these details before public launch.",
     sections: [
-      ["U.S. shipping", "Standard U.S. shipping is $6 for orders below $50 and free for orders of $50 or more. Delivery estimates begin after the print is ready."],
+      ["U.S. shipping", `Flat-rate U.S. shipping is ${shippingPrice} per order. Delivery estimates begin after the print is ready.`],
       ["Make time", "Most items are made or prepared within 3–5 business days. Larger batches or unusual colors may take longer; Jake will email if timing changes."],
-      ["Local pickup", "Local pickup is free and prepaid through Stripe. The pickup address is kept private. Jake will email after payment to coordinate the handoff."],
+      ["Raleigh pickup", `Pickup in ${PICKUP_AREA} is free and prepaid through Stripe. The exact pickup address is kept private. Jake will email after payment to coordinate the handoff.`],
       ["Address problems", "Customers are responsible for entering a complete shipping address. Contact the shop as soon as possible if an address needs correction."],
     ],
   },
@@ -30,6 +33,7 @@ const policies = {
       ["What the shop receives", "Stripe provides the contact, order, payment status, and fulfillment details needed to prepare and deliver an order."],
       ["Payment details", "Card and bank details are collected by Stripe on its hosted checkout. Jake’s 3D Print Shop does not receive or store full payment credentials."],
       ["Device storage", "The cart is stored locally in the customer’s browser so it remains available between visits. The test shop does not create customer accounts."],
+      ["Shop activity", "The shop records limited events such as product views, cart additions, and checkout starts without attaching names, email addresses, phone numbers, or shipping addresses."],
       ["Use of information", "Order information is used only for fulfillment, customer service, fraud prevention, and required business records."],
     ],
   },

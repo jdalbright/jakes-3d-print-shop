@@ -1,5 +1,7 @@
 export type Fulfillment = "shipping" | "pickup";
 export type ProductLicenseStatus = "pending" | "active" | "expired" | "not_required";
+export type CatalogVisibility = "public" | "office";
+export type OfficeFulfillment = "take_now" | "work_delivery";
 
 export type ProductVariant = {
   priceId: string;
@@ -21,12 +23,16 @@ export type StoreProduct = {
   pickup: boolean;
   ship: boolean;
   stockStatus: "in_stock" | "made_to_order" | "sold_out";
+  visibility: CatalogVisibility;
+  officeFulfillment?: OfficeFulfillment;
+  photoReady: boolean;
   image: string | null;
   images: string[];
   accent: string;
   colorHexes: string[];
   detailCopy: string;
   highlights: string[];
+  fitNote?: string;
   material: string;
   finish: string;
   care: string;

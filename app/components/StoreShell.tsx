@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import type { CartItem } from "../lib/types";
+import { BrandLogo } from "./BrandLogo";
 
 const STORAGE_KEY = "jakes-3d-print-shop-cart-v2";
 
@@ -124,8 +125,7 @@ export function StoreShell({
       ) : null}
       <header className="site-header">
         <Link className="brand" href="/" aria-label="Jake's 3D Print Shop home">
-          <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
-          <span>Jake’s <b>3D Print Shop</b></span>
+          <BrandLogo />
         </Link>
         <nav aria-label="Primary navigation">
           <Link className={pathname.startsWith("/products") ? "active" : ""} href="/products">Products</Link>
@@ -139,10 +139,9 @@ export function StoreShell({
       <footer className="site-footer">
         <div>
           <Link className="brand footer-brand" href="/">
-            <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
-            <span>Jake’s <b>3D Print Shop</b></span>
+            <BrandLogo />
           </Link>
-          <p>Useful objects, playful details, and small-batch prints made one layer at a time.</p>
+          <p>Design-led desk and home objects, made in small batches in Raleigh, NC.</p>
         </div>
         <div className="footer-links">
           <span>Shop details</span>

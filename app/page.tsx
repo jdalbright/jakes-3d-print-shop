@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CatalogGrid } from "./components/CatalogGrid";
 import { getCatalog } from "./lib/catalog";
+import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "./lib/store-config";
 
 function money(amount: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount / 100);
@@ -19,7 +20,7 @@ export default async function Home() {
     <>
       <section className="hero-section">
         <div className="hero-copy">
-          <p className="eyebrow hero-kicker">Jake’s workbench / small-batch maker studio</p>
+          <p className="eyebrow hero-kicker">Jake’s workbench / Raleigh maker studio</p>
           <h1>A cleaner desk, one layer at a time.</h1>
           <p className="hero-deck">
             Meet the Onami 2 Headphone Stand: a calm wave-inspired form, printed to order and finished by hand in Jake’s studio.
@@ -27,7 +28,7 @@ export default async function Home() {
           <div className="hero-actions">
             <Link className="primary-button" href="/products/onami-2-headphone-stand">View the Onami 2</Link>
           </div>
-          <p className="hero-footnote">Made locally · usually ready in 3–5 business days</p>
+          <p className="hero-footnote">Made locally in Raleigh · usually ready in 3–5 business days</p>
         </div>
         <div className="hero-product">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -44,8 +45,8 @@ export default async function Home() {
         <dl>
           <div><dt>Material</dt><dd>Plant-based PLA</dd></div>
           <div><dt>Make time</dt><dd>3–5 business days</dd></div>
-          <div><dt>Pickup</dt><dd>Free, arranged by email</dd></div>
-          <div><dt>Shipping</dt><dd>$6 · free over $50</dd></div>
+          <div><dt>Pickup</dt><dd>Free in {PICKUP_AREA}</dd></div>
+          <div><dt>Shipping</dt><dd>{money(STANDARD_US_SHIPPING_CENTS)} flat rate</dd></div>
         </dl>
       </section>
 
@@ -53,7 +54,7 @@ export default async function Home() {
         <div className="section-heading">
           <div><p className="eyebrow">The print shelf</p><h2>Fresh off the bench.</h2></div>
           <div className="section-heading-side">
-            <p>Two carefully selected designs, printed to order and finished in Jake’s studio.</p>
+            <p>Two carefully selected objects, printed to order and finished in Jake’s Raleigh studio.</p>
             <Link className="text-link" href="/products">View all products <span aria-hidden="true">→</span></Link>
           </div>
         </div>
@@ -80,8 +81,8 @@ export default async function Home() {
       <section className="fulfillment-section">
         <div><p className="eyebrow">Fulfillment</p><h2>Pickup or shipping.</h2></div>
         <dl className="fulfillment-list">
-          <div><dt>Local pickup</dt><dd>Pay online, then Jake will email you to arrange a private handoff.</dd><span>Free</span></div>
-          <div><dt>U.S. shipping</dt><dd>Standard shipping is $6. Orders of $50 or more ship free.</dd><span>3–7 days</span></div>
+          <div><dt>Raleigh pickup</dt><dd>Pay online, then Jake will email you to arrange a private handoff in {PICKUP_AREA}.</dd><span>Free</span></div>
+          <div><dt>U.S. shipping</dt><dd>Flat-rate shipping is {money(STANDARD_US_SHIPPING_CENTS)} per order.</dd><span>3–7 days</span></div>
           <div><dt>Payment</dt><dd>Card details are collected on Stripe’s secure checkout.</dd><span>Stripe</span></div>
         </dl>
       </section>

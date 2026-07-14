@@ -5,6 +5,7 @@ import { ProductConfigurator } from "../../components/ProductConfigurator";
 import { ProductGallery } from "../../components/ProductGallery";
 import { ProductVisual } from "../../components/ProductVisual";
 import { getCatalogProduct } from "../../lib/catalog";
+import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
 import type { StoreProduct } from "../../lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -138,10 +139,10 @@ export default async function ProductPage({ params }: Props) {
 
       <section className="product-services" aria-label="Shipping, pickup, and returns">
         {product.ship ? (
-          <article><span>Ships in the U.S.</span><h2>$6 below $50</h2><p>Standard shipping is free when the product subtotal reaches $50.</p><Link href="/policies/shipping">Shipping details</Link></article>
+          <article><span>Ships in the U.S.</span><h2>{money(STANDARD_US_SHIPPING_CENTS)} flat rate</h2><p>One flat shipping charge is added to each U.S. order.</p><Link href="/policies/shipping">Shipping details</Link></article>
         ) : null}
         {product.pickup ? (
-          <article><span>Local handoff</span><h2>Pickup is free</h2><p>Pay online, then Jake will email to coordinate the private pickup location.</p><Link href="/policies/shipping">Pickup details</Link></article>
+          <article><span>Raleigh handoff</span><h2>Pickup is free</h2><p>Pay online, then Jake will email to coordinate the private {PICKUP_AREA} pickup location.</p><Link href="/policies/shipping">Pickup details</Link></article>
         ) : null}
         <article><span>Made in small batches</span><h2>Returns stay simple</h2><p>Review the return window and what to do if a print arrives damaged.</p><Link href="/policies/returns">Return policy</Link></article>
       </section>

@@ -23,7 +23,7 @@ export function ProductVisual({ product, detail = false }: { product: VisualProd
     <div
       className={`product-visual generated-visual accent-${product.accent} ${detail ? "detail" : ""}`}
       role="img"
-      aria-label={`${product.name} demo placeholder`}
+      aria-label={`${product.name} product photo placeholder`}
     >
       <span className="visual-grid" aria-hidden="true" />
       <span className="visual-object" aria-hidden="true">

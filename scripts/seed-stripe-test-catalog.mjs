@@ -31,8 +31,8 @@ const catalog = [
       ship: "true",
       stock_status: "made_to_order",
       accent: "ocean",
-      detail_copy: "The Onami 2 turns a functional desktop stand into a calm, wave-like form. Its widened top spreads pressure across the headband, while the open base keeps the footprint light and stable.",
-      highlights: "Wide rounded support for over-ear headbands|Continuous wave channels from base to cradle|Stable cantilevered footprint|Optional silicone feet for added grip",
+      detail_copy: "The Onami 2 turns a functional desktop stand into a calm, wave-like form. Its widened top spreads pressure across the headband, while the open base keeps the footprint visually light.",
+      highlights: "Wide rounded support for over-ear headbands|Continuous wave channels from base to cradle|Compact cantilevered footprint|Optional silicone feet for added grip",
       material: "Matte PLA",
       finish: "Fine visible print layers with hand-checked support surfaces",
       care: "Wipe with a soft, damp cloth. Keep away from sustained heat and direct sunlight.",
@@ -59,7 +59,8 @@ const catalog = [
       stock_status: "made_to_order",
       accent: "clay",
       detail_copy: "The Japandi holder turns an everyday kitchen roll into a calmer countertop object. Its ribbed outer sleeve adds grip and texture, while the open front keeps the working edge visible and accessible.",
-      highlights: "Open front keeps the next sheet within reach|Ribbed sleeve gives the roll a finished silhouette|Standard and XL options for different roll sizes|Optional foam feet can add countertop grip",
+      highlights: "Open front keeps the next sheet within reach|Ribbed sleeve gives the roll a finished silhouette|Standard and jumbo options for different roll sizes|Optional foam feet can add countertop grip",
+      fit_note: "Measure your unopened roll at its widest point. Standard Roll fits up to 4.4 in (113 mm); Jumbo / Warehouse Roll fits up to 5.9 in (150 mm).",
       material: "Matte PLA",
       finish: "Fine vertical ribbing with hand-checked edges and surfaces",
       care: "Wipe with a soft, damp cloth. Do not place in a dishwasher or near sustained heat.",
@@ -70,9 +71,66 @@ const catalog = [
       license_status: "pending_confirmation",
     },
     variants: [
-      ["Standard", 3500, "JPT-STANDARD", "Fits rolls up to 4.4 in diameter · 7 in tall"],
-      ["XL", 4500, "JPT-XL", "Fits rolls up to 5.9 in diameter · 7.6 in tall"],
+      ["Standard Roll", 3900, "JPT-STANDARD", "Fits rolls up to 4.4 in (113 mm) diameter · 7 in tall"],
+      ["Jumbo / Warehouse Roll", 5200, "JPT-XL", "Fits rolls up to 5.9 in (150 mm) diameter · 7.6 in tall"],
     ],
+  },
+  {
+    seedKey: "jakes-office-keychain-rack",
+    name: "Keychain from the Rack",
+    description: "Pay online, then take any one keychain that is physically available on the office rack.",
+    metadata: {
+      shop_slug: "office-keychain-rack",
+      category: "Office rack",
+      colors: "Any available",
+      color_hexes: "#e5bd4d",
+      featured: "false",
+      pickup: "true",
+      ship: "false",
+      stock_status: "in_stock",
+      visibility: "office",
+      office_fulfillment: "take_now",
+      photo_status: "missing",
+      accent: "yellow",
+      detail_copy: "Choose from what is physically available, pay online, and take it with you. No confirmation screen needs to be shown.",
+      highlights: "Any physically available rack design|Immediate honor-system pickup|Designed and printed by Jake",
+      material: "PLA",
+      finish: "Small-batch print, checked before it reaches the rack",
+      care: "Keep away from sustained heat.",
+      lead_time: "Available immediately while rack stock lasts",
+      license_status: "not_required",
+    },
+    variants: [["One keychain", 500, "OFFICE-KEYCHAIN"]],
+  },
+  {
+    seedKey: "jakes-office-modular-desk-organizer",
+    name: "Modular Desk Organizer Set",
+    description: "A coordinated four-piece system with a phone stand, pen holder, storage cup, and base tray.",
+    metadata: {
+      shop_slug: "modular-desk-organizer-set",
+      category: "Desk",
+      colors: "Matte Bone White|Matte Charcoal|Matte Dark Green",
+      color_hexes: "#cbc6b8|#000000|#68724d",
+      featured: "false",
+      pickup: "true",
+      ship: "false",
+      stock_status: "made_to_order",
+      visibility: "office",
+      office_fulfillment: "work_delivery",
+      photo_status: "missing",
+      accent: "moss",
+      detail_copy: "Four calm, functional pieces can be arranged to fit a compact desk while keeping a phone, pens, and small essentials within reach.",
+      highlights: "Classic phone stand|Dedicated pen holder|Storage cup for small essentials|Base tray keeps the set together",
+      material: "Bambu PLA Matte",
+      finish: "Matte surface with hand-checked edges and fit",
+      care: "Wipe with a soft, damp cloth. Keep away from sustained heat and direct sunlight.",
+      lead_time: "Printed to order and delivered at work in 3–5 business days",
+      designer_name: "Meyui",
+      designer_url: "https://makerworld.com/en/@Meyui",
+      source_model_url: "https://makerworld.com/en/models/2087519-modular-desk-organizer-system-iphone-stand-module#profileId-2256937",
+      license_status: "pending",
+    },
+    variants: [["Complete four-piece set", 3000, "OFFICE-MEYUI-DESK-SET"]],
   },
 ];
 
@@ -90,6 +148,7 @@ let productsUpdated = 0;
 let productsArchived = 0;
 let pricesCreated = 0;
 let pricesReused = 0;
+let pricesArchived = 0;
 
 for (const item of catalog) {
   const search = await stripe.products.search({
@@ -110,7 +169,7 @@ for (const item of catalog) {
       active: true,
       name: item.name,
       description: item.description,
-      shippable: true,
+      shippable: item.metadata.ship === "true",
       metadata: productMetadata,
     });
     productsUpdated += 1;
@@ -118,13 +177,14 @@ for (const item of catalog) {
     product = await stripe.products.create({
       name: item.name,
       description: item.description,
-      shippable: true,
+      shippable: item.metadata.ship === "true",
       metadata: productMetadata,
     });
     productsCreated += 1;
   }
 
   let firstPriceId = null;
+  const pricesToArchive = [];
   for (const [sizeLabel, unitAmount, sku, dimensions] of item.variants) {
     const lookupKey = `jakes_demo_${String(sku).toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
     const existing = await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 });
@@ -137,13 +197,25 @@ for (const item of catalog) {
 
     if (price) {
       if (price.product !== product.id || price.unit_amount !== unitAmount || price.currency !== "usd" || price.type !== "one_time") {
-        throw new Error(`Existing lookup key ${lookupKey} does not match the catalog. Archive it or choose a new key.`);
+        const previousPrice = price;
+        price = await stripe.prices.create({
+          product: product.id,
+          currency: "usd",
+          unit_amount: unitAmount,
+          lookup_key: lookupKey,
+          transfer_lookup_key: true,
+          nickname: sizeLabel,
+          metadata: priceMetadata,
+        });
+        pricesToArchive.push(previousPrice.id);
+        pricesCreated += 1;
+      } else {
+        await stripe.prices.update(price.id, {
+          nickname: sizeLabel,
+          metadata: priceMetadata,
+        });
+        pricesReused += 1;
       }
-      await stripe.prices.update(price.id, {
-        nickname: sizeLabel,
-        metadata: priceMetadata,
-      });
-      pricesReused += 1;
     } else {
       price = await stripe.prices.create({
         product: product.id,
@@ -160,6 +232,10 @@ for (const item of catalog) {
 
   if (firstPriceId && product.default_price !== firstPriceId) {
     await stripe.products.update(product.id, { default_price: firstPriceId });
+  }
+  for (const priceId of pricesToArchive) {
+    await stripe.prices.update(priceId, { active: false });
+    pricesArchived += 1;
   }
 }
 
@@ -181,5 +257,5 @@ for (const seedKey of retiredSeedKeys) {
 }
 
 console.log(
-  `Stripe test catalog ready: ${productsCreated} products created, ${productsUpdated} updated, ${productsArchived} archived, ${pricesCreated} prices created, ${pricesReused} reused.`,
+  `Stripe test catalog ready: ${productsCreated} products created, ${productsUpdated} updated, ${productsArchived} products archived, ${pricesCreated} prices created, ${pricesReused} reused, ${pricesArchived} prices archived.`,
 );

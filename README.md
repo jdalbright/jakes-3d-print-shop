@@ -1,6 +1,6 @@
 # Jake’s 3D Print Shop
 
-A private test storefront for small-batch 3D prints. Products and prices are managed in Stripe; the site provides the catalog, variants, persistent cart, U.S. shipping, prepaid local pickup, and Stripe-hosted Checkout.
+A private test storefront for design-led desk and home objects made in Raleigh. Products and prices are managed in Stripe; the site provides the catalog, variants, persistent cart, $12 flat-rate U.S. shipping, prepaid Raleigh pickup, and Stripe-hosted Checkout.
 
 ## Local development
 
@@ -16,13 +16,13 @@ The site works without Stripe credentials using a read-only demo catalog. Checko
 1. Copy `.env.example` to `.env.local`.
 2. Add a Stripe **test-mode** secret key as `STRIPE_SECRET_KEY`.
 3. Keep `STORE_LIVE_MODE=false`.
-4. Seed or refresh the six demo products:
+4. Seed or refresh the private test catalog:
 
 ```bash
 npm run stripe:seed
 ```
 
-The seeder is idempotent and refuses live keys. It creates Stripe Products and one-time USD Prices with the metadata contract the storefront expects.
+The seeder is idempotent and refuses live keys. It creates Stripe Products and one-time USD Prices with the metadata contract the storefront expects. When a price amount changes, it transfers the stable lookup key to a replacement Price and archives the old Price.
 
 ## Stripe webhook
 
@@ -43,11 +43,21 @@ Active products appear only when `storefront=true`. Supported Product metadata:
 - `shop_slug`, `category`, `colors` (pipe- or comma-separated)
 - `color_hexes` (pipe-separated six-digit hex values aligned with `colors`)
 - `featured`, `pickup`, `ship`, `demo`
+- `visibility`: `public` (the default) or `office`
+- `office_fulfillment`: `take_now` or `work_delivery` for office-only listings
+- `photo_status`: set to `ready` only after Jake's original listing photographs have been added
 - `stock_status`: `in_stock`, `made_to_order`, or `sold_out`
+- `license_status`: `active`, `not_required`, `pending`, or `pending_confirmation`
 - `accent`: `clay`, `ocean`, `graphite`, `moss`, `rose`, or `yellow`
-- `detail_copy`, `highlights` (pipe-separated), `material`, `finish`, `care`, and `lead_time`
+- `detail_copy`, `highlights` (pipe-separated), `fit_note`, `material`, `finish`, `care`, and `lead_time`
 
 Use Stripe Product images for the product gallery; the first image is the catalog-card image. Use one-time USD Prices for size variants. Price metadata supports `size_label`, `variant_key`, and `dimensions`; `lookup_key` is used as the stable SKU.
+
+The unlisted `/office` route loads only `visibility=office` products. Normal catalog routes exclude them. Office Checkout accepts one office product at a time, pickup fulfillment only, and records `sales_channel=office_nfc` plus the trusted `office_fulfillment` value in Stripe metadata. Live office purchases remain blocked until the product has an allowed license status and `photo_status=ready`.
+
+## Storefront measurement
+
+The site records privacy-conscious `product_view`, `add_to_cart`, `checkout_start`, `checkout_redirect`, `office_page_view`, and `office_product_select` events in application logs. These events contain only product, variant, fulfillment, sales-channel, and item-count fields. Paid checkout outcomes continue to come from verified Stripe webhooks; names, contact details, and addresses are not copied into analytics logs.
 
 ## Safety and launch
 

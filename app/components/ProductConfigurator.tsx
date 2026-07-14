@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { StoreProduct } from "../lib/types";
+import { trackStorefrontEvent } from "../lib/storefront-events";
 import { useStore } from "./StoreShell";
 
 function money(amount: number) {
@@ -18,6 +19,10 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
   const variant = product.variants[variantIndex];
   const soldOut = product.stockStatus === "sold_out";
 
+  useEffect(() => {
+    trackStorefrontEvent("product_view", { productSlug: product.slug });
+  }, [product.slug]);
+
   function addToCart() {
     addItem({
       priceId: variant.priceId,
@@ -32,6 +37,11 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
       accent: product.accent,
       pickup: product.pickup,
       ship: product.ship,
+    });
+    trackStorefrontEvent("add_to_cart", {
+      productSlug: product.slug,
+      variantSku: variant.sku,
+      itemCount: quantity,
     });
     setAdded(true);
     window.setTimeout(() => setAdded(false), 2200);
@@ -84,6 +94,7 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
         <div><dt>SKU</dt><dd>{variant.sku}</dd></div>
         <div><dt>Dimensions</dt><dd>{variant.dimensions || "Pending final test print"}</dd></div>
       </dl>
+      {product.fitNote ? <p className="fit-note">{product.fitNote}</p> : null}
 
       <div className="buy-row">
         <label>
@@ -98,7 +109,7 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
       </div>
       <div className="fulfillment-chips">
         {product.ship ? <span>U.S. shipping</span> : null}
-        {product.pickup ? <span>Free local pickup</span> : null}
+        {product.pickup ? <span>Free Raleigh pickup</span> : null}
         <span>Secure Stripe checkout</span>
       </div>
       {added ? <Link className="added-link" href="/cart">View cart</Link> : null}

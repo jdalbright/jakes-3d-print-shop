@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Fulfillment } from "../lib/types";
+import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../lib/store-config";
+import { trackStorefrontEvent } from "../lib/storefront-events";
 import { ProductVisual } from "../components/ProductVisual";
 import { useStore } from "../components/StoreShell";
 
@@ -23,7 +25,7 @@ export function CartPage() {
     [fulfillment, items],
   );
   const subtotal = availableItems.reduce((sum, item) => sum + item.unitAmount * item.quantity, 0);
-  const shipping = fulfillment === "shipping" && subtotal < 5000 ? 600 : 0;
+  const shipping = fulfillment === "shipping" ? STANDARD_US_SHIPPING_CENTS : 0;
   const excludedCount = items.length - availableItems.length;
 
   async function checkout() {
@@ -33,6 +35,8 @@ export function CartPage() {
     }
     setLoading(true);
     setError(null);
+    const itemCount = availableItems.reduce((sum, item) => sum + item.quantity, 0);
+    trackStorefrontEvent("checkout_start", { fulfillment, itemCount });
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -47,6 +51,7 @@ export function CartPage() {
       });
       const result = (await response.json()) as { url?: string; error?: string };
       if (!response.ok || !result.url) throw new Error(result.error || "Checkout could not start.");
+      trackStorefrontEvent("checkout_redirect", { fulfillment, itemCount });
       window.location.assign(result.url);
     } catch (checkoutError) {
       setError(checkoutError instanceof Error ? checkoutError.message : "Checkout could not start.");
@@ -106,10 +111,10 @@ export function CartPage() {
           <p className="eyebrow">How should it get to you?</p>
           <div className="fulfillment-options">
             <button className={fulfillment === "shipping" ? "selected" : ""} onClick={() => setFulfillment("shipping")} type="button">
-              <span><b>Ship it</b><small>Anywhere in the U.S.</small></span><i>{subtotal >= 5000 ? "Free" : "$6"}</i>
+              <span><b>Ship it</b><small>Flat rate anywhere in the U.S.</small></span><i>{money(STANDARD_US_SHIPPING_CENTS)}</i>
             </button>
             <button className={fulfillment === "pickup" ? "selected" : ""} onClick={() => setFulfillment("pickup")} type="button">
-              <span><b>Local pickup</b><small>Coordinate after payment</small></span><i>Free</i>
+              <span><b>{PICKUP_AREA} pickup</b><small>Private location coordinated after payment</small></span><i>Free</i>
             </button>
           </div>
           {excludedCount ? <p className="order-warning">{excludedCount} item{excludedCount === 1 ? " is" : "s are"} unavailable for this fulfillment method and won’t be checked out.</p> : null}
@@ -118,7 +123,7 @@ export function CartPage() {
             <div><dt>{fulfillment === "shipping" ? "Shipping" : "Pickup"}</dt><dd>{shipping ? money(shipping) : "Free"}</dd></div>
             <div className="total"><dt>Estimated total</dt><dd>{money(subtotal + shipping)}</dd></div>
           </dl>
-          {fulfillment === "shipping" && subtotal < 5000 ? <p className="shipping-progress">Add {money(5000 - subtotal)} more for free shipping.</p> : null}
+          {fulfillment === "shipping" ? <p className="shipping-progress">One flat shipping charge applies to the full order.</p> : null}
           {!checkoutEnabled ? <div className="test-callout"><b>Checkout is safely paused.</b><span>Add a Stripe test key and test catalog to enable test payments.</span></div> : null}
           {error ? <p className="checkout-error" role="alert">{error}</p> : null}
           <button className="primary-button checkout-button" disabled={loading || !availableItems.length} onClick={checkout} type="button">
