@@ -7,6 +7,9 @@ import type { CatalogResult, CatalogVisibility, OfficeFulfillment, ProductLicens
 
 const accents = ["clay", "ocean", "graphite", "moss", "rose", "yellow"];
 const localProductImages: Record<string, string[]> = {
+  "office-keychain-rack": [
+    "/products/office-keychain-assortment-illustration-v1.png",
+  ],
   "onami-2-headphone-stand": [
     "/products/onami-2-headphone-stand-hero-v3.png",
     "/products/onami-2-headphone-stand-rear-v3.png",

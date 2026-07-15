@@ -88,7 +88,11 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   const publicHtml = await publicCatalog.text();
   assert.match(officeHtml, /Tap\. Pay\. Take one\./);
   assert.match(officeHtml, /Keychain from the Rack/);
+  assert.match(officeHtml, /office-keychain-assortment-illustration-v1\.png/);
+  assert.match(officeHtml, /Illustrated assortment/);
   assert.match(officeHtml, /Modular Desk Organizer Set/);
+  assert.match(officeHtml, /Also available, if useful/);
+  assert.match(officeHtml, /No pitch/);
   assert.match(officeHtml, /\$5\.00/);
   assert.match(officeHtml, /\$30\.00/);
   assert.match(officeHtml, /Matte Bone White/);
@@ -102,6 +106,7 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   assert.match(officeClient, /length: 10/);
   assert.match(officeClient, /salesChannel: "office_nfc"/);
   assert.match(officeClient, /No confirmation needs to be shown/);
+  assert.match(officeClient, /<details className="office-organizer-details">/);
 });
 
 test("server-renders both product pages and policy routes", async () => {

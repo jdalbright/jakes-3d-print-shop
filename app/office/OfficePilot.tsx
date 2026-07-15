@@ -108,6 +108,7 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
           <article className="office-offer office-offer--rack">
             <div className="office-offer-visual">
               <ProductVisual product={keychain} />
+              <span className="office-visual-note">Illustrated assortment · Actual rack designs vary</span>
               <span className="office-price-tag">{money(keychainVariant.unitAmount)}</span>
             </div>
             <div className="office-offer-copy">
@@ -143,55 +144,61 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
         ) : null}
 
         {organizer && organizerVariant ? (
-          <article className="office-offer office-offer--organizer">
-            <div className="office-offer-visual">
+          <aside className="office-organizer-hint" aria-labelledby="office-organizer-title">
+            <div className="office-organizer-hint-visual">
               <ProductVisual product={organizer} />
-              <span className="office-price-tag">{money(organizerVariant.unitAmount)}</span>
             </div>
-            <div className="office-offer-copy">
-              <div>
-                <p className="eyebrow">02 / Office-first release</p>
-                <h2>{organizer.name}</h2>
-                <p>{organizer.description}</p>
-              </div>
-              <ul className="office-includes">
-                {organizer.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
-              </ul>
-              <fieldset className="office-colors">
-                <legend>Choose a matte color <span>{organizerColor}</span></legend>
-                <div className="color-row">
-                  {organizer.colors.map((color, index) => (
-                    <button
-                      className={organizerColor === color ? "selected" : ""}
-                      key={color}
-                      onClick={() => setOrganizerColor(color)}
-                      type="button"
-                      aria-label={`Choose ${color}`}
-                      aria-pressed={organizerColor === color}
-                    >
-                      <i aria-hidden="true" style={{ backgroundColor: organizer.colorHexes[index] }} />
-                      <span>{color.replace("Matte ", "")}</span>
-                    </button>
-                  ))}
+            <div className="office-organizer-hint-copy">
+              <p className="eyebrow">Also available, if useful</p>
+              <h2 id="office-organizer-title">{organizer.name}</h2>
+              <p>I’m also testing a made-to-order four-piece organizer for anyone who could use a calmer desk. No pitch—details are here if you’re curious.</p>
+              <details className="office-organizer-details">
+                <summary>
+                  <span>See colors and what’s included</span>
+                  <b>{money(organizerVariant.unitAmount)}</b>
+                </summary>
+                <div className="office-organizer-details-body">
+                  <p>{organizer.description}</p>
+                  <ul className="office-includes">
+                    {organizer.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
+                  </ul>
+                  <fieldset className="office-colors">
+                    <legend>Choose a matte color <span>{organizerColor}</span></legend>
+                    <div className="color-row">
+                      {organizer.colors.map((color, index) => (
+                        <button
+                          className={organizerColor === color ? "selected" : ""}
+                          key={color}
+                          onClick={() => setOrganizerColor(color)}
+                          type="button"
+                          aria-label={`Choose ${color}`}
+                          aria-pressed={organizerColor === color}
+                        >
+                          <i aria-hidden="true" style={{ backgroundColor: organizer.colorHexes[index] }} />
+                          <span>{color.replace("Matte ", "")}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <button
+                    className="office-order-button"
+                    disabled={organizerSoldOut || loadingSlug !== null || !organizerColor}
+                    onClick={() => checkout(organizer, 1, organizerColor)}
+                    type="button"
+                  >
+                    {organizerSoldOut ? "Currently unavailable" : loadingSlug === organizer.slug ? "Opening Stripe…" : `Choose this set · ${money(organizerVariant.unitAmount)}`}
+                  </button>
+                  <p className="office-fine-print">Made to order · Delivered at work in 3–5 business days · No delivery fee</p>
+                  {!organizer.photoReady || organizer.licenseStatus !== "active" ? (
+                    <div className="test-callout office-launch-gate">
+                      <b>Private test listing</b>
+                      <span>Original photos and an active Meyui commercial license are required before real payments are enabled.</span>
+                    </div>
+                  ) : null}
                 </div>
-              </fieldset>
-              <button
-                className="primary-button office-order-button"
-                disabled={organizerSoldOut || loadingSlug !== null || !organizerColor}
-                onClick={() => checkout(organizer, 1, organizerColor)}
-                type="button"
-              >
-                {organizerSoldOut ? "Currently unavailable" : loadingSlug === organizer.slug ? "Opening Stripe…" : `Order the set · ${money(organizerVariant.unitAmount)}`}
-              </button>
-              <p className="office-fine-print">Made to order · Delivered at work in 3–5 business days · No delivery fee</p>
-              {!organizer.photoReady || organizer.licenseStatus !== "active" ? (
-                <div className="test-callout office-launch-gate">
-                  <b>Private test listing</b>
-                  <span>Original photos and an active Meyui commercial license are required before real payments are enabled.</span>
-                </div>
-              ) : null}
+              </details>
             </div>
-          </article>
+          </aside>
         ) : null}
       </div>
 
