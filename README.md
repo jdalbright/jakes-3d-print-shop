@@ -51,7 +51,7 @@ Active products appear only when `storefront=true`. Supported Product metadata:
 - `accent`: `clay`, `ocean`, `graphite`, `moss`, `rose`, or `yellow`
 - `detail_copy`, `highlights` (pipe-separated), `fit_note`, `material`, `finish`, `care`, and `lead_time`
 
-Use Stripe Product images for the product gallery; the first image is the catalog-card image. Use one-time USD Prices for size variants. Price metadata supports `size_label`, `variant_key`, and `dimensions`; `lookup_key` is used as the stable SKU.
+Use Stripe Product images for the product gallery; the first image is the catalog-card image. Use one-time USD Prices for size variants. Price metadata supports `size_label`, `variant_key`, `dimensions`, `min_quantity`, and `max_quantity`; `lookup_key` is used as the stable SKU. Quantity bounds are always enforced by the server before Checkout opens.
 
 The unlisted `/office` route loads only `visibility=office` products. Normal catalog routes exclude them. Office Checkout accepts one office product at a time, pickup fulfillment only, and records `sales_channel=office_nfc` plus the trusted `office_fulfillment` value in Stripe metadata. Live office purchases remain blocked until the product has an allowed license status and `photo_status=ready`.
 

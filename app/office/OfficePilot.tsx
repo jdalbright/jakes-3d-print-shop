@@ -5,10 +5,16 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProductVisual } from "../components/ProductVisual";
 import { trackStorefrontEvent } from "../lib/storefront-events";
-import type { StoreProduct } from "../lib/types";
+import type { ProductVariant, StoreProduct } from "../lib/types";
 
 function money(amount: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount / 100);
+}
+
+function variantForQuantity(product: StoreProduct, quantity: number): ProductVariant | undefined {
+  return product.variants
+    .filter((variant) => quantity >= (variant.minQuantity ?? 1) && quantity <= (variant.maxQuantity ?? 10))
+    .sort((a, b) => (b.minQuantity ?? 1) - (a.minQuantity ?? 1))[0];
 }
 
 type Props = {
@@ -34,7 +40,11 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
       return;
     }
 
-    const variant = product.variants[0];
+    const variant = variantForQuantity(product, quantity);
+    if (!variant) {
+      setError("That quantity is not available right now. Refresh the page and try again.");
+      return;
+    }
     setLoadingSlug(product.slug);
     setError(null);
     trackStorefrontEvent("office_product_select", {
@@ -76,8 +86,10 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
     }
   }
 
-  const keychainVariant = keychain?.variants[0];
-  const organizerVariant = organizer?.variants[0];
+  const keychainBaseVariant = keychain ? variantForQuantity(keychain, 1) : undefined;
+  const keychainDealVariant = keychain?.variants.find((variant) => (variant.minQuantity ?? 1) >= 2);
+  const keychainVariant = keychain ? variantForQuantity(keychain, keychainQuantity) : undefined;
+  const organizerVariant = organizer ? variantForQuantity(organizer, 1) : undefined;
   const keychainSoldOut = keychain?.stockStatus === "sold_out";
   const organizerSoldOut = organizer?.stockStatus === "sold_out";
 
@@ -104,12 +116,15 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
       ) : null}
 
       <div className="office-offers">
-        {keychain && keychainVariant ? (
+        {keychain && keychainBaseVariant ? (
           <article className="office-offer office-offer--rack">
             <div className="office-offer-visual">
               <ProductVisual product={keychain} />
               <span className="office-visual-note">Illustrated assortment · Actual rack designs vary</span>
-              <span className="office-price-tag">{money(keychainVariant.unitAmount)}</span>
+              <span className="office-price-tag">
+                <b>{money(keychainBaseVariant.unitAmount)}</b>
+                {keychainDealVariant ? <small>2+ · {money(keychainDealVariant.unitAmount)} each</small> : null}
+              </span>
             </div>
             <div className="office-offer-copy">
               <div>
@@ -122,6 +137,12 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
                 <li><span>2</span>Pay here with Stripe.</li>
                 <li><span>3</span>Take any one from the rack. No confirmation needs to be shown.</li>
               </ol>
+              {keychainDealVariant ? (
+                <div className="office-deal-note">
+                  <b>Take more, save a little</b>
+                  <span>One for {money(keychainBaseVariant.unitAmount)} · Two or more for {money(keychainDealVariant.unitAmount)} each</span>
+                </div>
+              ) : null}
               <div className="office-buy-row">
                 <label>
                   <span>Quantity</span>
@@ -131,11 +152,17 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
                 </label>
                 <button
                   className="primary-button"
-                  disabled={keychainSoldOut || loadingSlug !== null}
+                  disabled={keychainSoldOut || loadingSlug !== null || !keychainVariant}
                   onClick={() => checkout(keychain, keychainQuantity, keychain.colors[0])}
                   type="button"
                 >
-                  {keychainSoldOut ? "Rack sold out" : loadingSlug === keychain.slug ? "Opening Stripe…" : `Pay ${money(keychainVariant.unitAmount * keychainQuantity)} & take ${keychainQuantity}`}
+                  {keychainSoldOut
+                    ? "Rack sold out"
+                    : loadingSlug === keychain.slug
+                      ? "Opening Stripe…"
+                      : keychainVariant
+                        ? `Pay ${money(keychainVariant.unitAmount * keychainQuantity)} & take ${keychainQuantity}`
+                        : "Price unavailable"}
                 </button>
               </div>
               <p className="office-fine-print">Honor-system pickup · Choose only from current rack stock · Secure Stripe receipt by email</p>

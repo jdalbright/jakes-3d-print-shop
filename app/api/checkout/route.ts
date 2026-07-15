@@ -18,6 +18,13 @@ function metadataBool(value: string | undefined, fallback = true) {
   return value.toLowerCase() === "true";
 }
 
+function quantityBound(value: string | undefined) {
+  if (!value) return null;
+  const quantity = Number(value);
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) throw new Error("invalid_price");
+  return quantity;
+}
+
 export async function POST(request: Request) {
   const stripe = getStripe();
   if (!stripe) {
@@ -80,6 +87,12 @@ export async function POST(request: Request) {
       const colors = (product.metadata.colors || "As shown").split(/[|,]/).map((color) => color.trim().toLowerCase());
       if (!colors.includes(item.color.toLowerCase())) throw new Error("invalid_color");
       if (product.metadata.stock_status === "sold_out") throw new Error("sold_out");
+      const minQuantity = quantityBound(price.metadata.min_quantity);
+      const maxQuantity = quantityBound(price.metadata.max_quantity);
+      if ((minQuantity !== null && item.quantity < minQuantity) || (maxQuantity !== null && item.quantity > maxQuantity)) {
+        throw new Error("invalid_quantity_tier");
+      }
+      if (minQuantity !== null && maxQuantity !== null && minQuantity > maxQuantity) throw new Error("invalid_price");
       const licenseStatus = product.metadata.license_status;
       if (isLiveLaunchEnabled() && licenseStatus !== "active" && licenseStatus !== "not_required") {
         throw new Error("license_unavailable");
@@ -176,6 +189,8 @@ export async function POST(request: Request) {
         ? "Original product photos are required before this listing can accept live payments."
       : message === "invalid_channel"
         ? "This item is not available through that checkout page."
+      : message === "invalid_quantity_tier"
+        ? "That quantity does not match the selected price. Refresh the page and try again."
       : message.includes("unavailable")
         ? "An item is not available for the selected fulfillment method."
         : message === "invalid_color" || message === "invalid_price"

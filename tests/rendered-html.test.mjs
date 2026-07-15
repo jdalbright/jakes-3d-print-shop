@@ -94,6 +94,9 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   assert.match(officeHtml, /Also available, if useful/);
   assert.match(officeHtml, /No pitch/);
   assert.match(officeHtml, /\$5\.00/);
+  assert.match(officeHtml, /Take more, save a little/);
+  assert.match(officeHtml, /Two or more for/);
+  assert.match(officeHtml, /\$4\.00/);
   assert.match(officeHtml, /\$30\.00/);
   assert.match(officeHtml, /Matte Bone White/);
   assert.match(officeHtml, /Matte Charcoal/);
@@ -107,6 +110,8 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   assert.match(officeClient, /salesChannel: "office_nfc"/);
   assert.match(officeClient, /No confirmation needs to be shown/);
   assert.match(officeClient, /<details className="office-organizer-details">/);
+  assert.match(officeClient, /variantForQuantity/);
+  assert.match(officeClient, /keychainVariant\.unitAmount \* keychainQuantity/);
 });
 
 test("server-renders both product pages and policy routes", async () => {
@@ -210,6 +215,10 @@ test("catalog seeding is test-mode only and idempotent", async () => {
   assert.match(seed, /jakes-office-keychain-rack/);
   assert.match(seed, /jakes-office-modular-desk-organizer/);
   assert.match(seed, /OFFICE-KEYCHAIN/);
+  assert.match(seed, /OFFICE-KEYCHAIN-MULTI/);
+  assert.match(seed, /400/);
+  assert.match(seed, /min_quantity/);
+  assert.match(seed, /max_quantity/);
   assert.match(seed, /OFFICE-MEYUI-DESK-SET/);
   assert.match(seed, /Matte Bone White\|Matte Charcoal\|Matte Dark Green/);
   assert.match(seed, /visibility: "office"/);
@@ -233,6 +242,9 @@ test("office checkout is single-item, channel-bound, pickup-only, and phone-ligh
   ]);
   assert.match(checkout, /salesChannel\?: "office_nfc"/);
   assert.match(checkout, /body\.items\.length !== 1/);
+  assert.match(checkout, /price\.metadata\.min_quantity/);
+  assert.match(checkout, /price\.metadata\.max_quantity/);
+  assert.match(checkout, /invalid_quantity_tier/);
   assert.match(checkout, /visibility !== "office"/);
   assert.match(checkout, /visibility === "office"/);
   assert.match(checkout, /office_fulfillment/);

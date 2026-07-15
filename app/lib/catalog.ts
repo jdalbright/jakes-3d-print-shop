@@ -27,6 +27,12 @@ function boolMetadata(value: string | undefined, fallback = false) {
   return value.toLowerCase() === "true";
 }
 
+function quantityMetadata(value: string | undefined) {
+  if (!value) return undefined;
+  const quantity = Number(value);
+  return Number.isInteger(quantity) && quantity >= 1 && quantity <= 10 ? quantity : undefined;
+}
+
 function productFromStripe(
   product: Stripe.Product,
   prices: Stripe.Price[],
@@ -47,8 +53,10 @@ function productFromStripe(
       currency: "usd" as const,
       sku: price.metadata.variant_key || price.lookup_key || price.id,
       dimensions: price.metadata.dimensions?.trim() || undefined,
+      minQuantity: quantityMetadata(price.metadata.min_quantity),
+      maxQuantity: quantityMetadata(price.metadata.max_quantity),
     }))
-    .sort((a, b) => a.unitAmount - b.unitAmount);
+    .sort((a, b) => (a.minQuantity ?? 1) - (b.minQuantity ?? 1) || a.unitAmount - b.unitAmount);
 
   if (!variants.length) return null;
 

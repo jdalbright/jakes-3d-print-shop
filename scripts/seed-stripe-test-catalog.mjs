@@ -100,7 +100,10 @@ const catalog = [
       lead_time: "Available immediately while rack stock lasts",
       license_status: "not_required",
     },
-    variants: [["One keychain", 500, "OFFICE-KEYCHAIN"]],
+    variants: [
+      ["One keychain", 500, "OFFICE-KEYCHAIN", null, 1, 1],
+      ["Two or more keychains", 400, "OFFICE-KEYCHAIN-MULTI", null, 2, 10],
+    ],
   },
   {
     seedKey: "jakes-office-modular-desk-organizer",
@@ -185,7 +188,7 @@ for (const item of catalog) {
 
   let firstPriceId = null;
   const pricesToArchive = [];
-  for (const [sizeLabel, unitAmount, sku, dimensions] of item.variants) {
+  for (const [sizeLabel, unitAmount, sku, dimensions, minQuantity, maxQuantity] of item.variants) {
     const lookupKey = `jakes_demo_${String(sku).toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
     const existing = await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 });
     let price = existing.data[0];
@@ -193,6 +196,8 @@ for (const item of catalog) {
       size_label: sizeLabel,
       variant_key: sku,
       ...(dimensions ? { dimensions } : {}),
+      ...(minQuantity ? { min_quantity: String(minQuantity) } : {}),
+      ...(maxQuantity ? { max_quantity: String(maxQuantity) } : {}),
     };
 
     if (price) {

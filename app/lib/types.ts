@@ -10,6 +10,8 @@ export type ProductVariant = {
   currency: "usd";
   sku: string;
   dimensions?: string;
+  minQuantity?: number;
+  maxQuantity?: number;
 };
 
 export type StoreProduct = {
