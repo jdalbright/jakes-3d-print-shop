@@ -86,7 +86,7 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   assert.equal(office.status, 200);
   const officeHtml = await office.text();
   const publicHtml = await publicCatalog.text();
-  assert.match(officeHtml, /Tap\. Pay\. Take one\./);
+  assert.match(officeHtml, /Pay \$5\. Take one\./);
   assert.match(officeHtml, /Keychain from the Rack/);
   assert.match(officeHtml, /office-keychain-assortment-illustration-v1\.png/);
   assert.match(officeHtml, /Illustrated assortment/);
@@ -95,8 +95,8 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   assert.match(officeHtml, /Optional desk add-on/);
   assert.match(officeHtml, /Peek only if it sounds useful/);
   assert.match(officeHtml, /\$5\.00/);
-  assert.match(officeHtml, /Take more, save a little/);
-  assert.match(officeHtml, /Two or more for/);
+  assert.match(officeHtml, /One for [\s\S]{0,24}\$5\.00/);
+  assert.match(officeHtml, /Taking two or more/);
   assert.match(officeHtml, /\$4\.00/);
   assert.match(officeHtml, /\$30\.00/);
   assert.match(officeHtml, /Matte Bone White/);
@@ -110,6 +110,7 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   assert.match(officeClient, /length: 10/);
   assert.match(officeClient, /salesChannel: "office_nfc"/);
   assert.match(officeClient, /No confirmation needs to be shown/);
+  assert.match(officeClient, /How the honor system works/);
   assert.match(officeClient, /<details className="office-organizer-details">/);
   assert.match(officeClient, /error\?\.slug === keychain\.slug/);
   assert.match(officeClient, /error\?\.slug === organizer\.slug/);

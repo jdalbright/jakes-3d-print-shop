@@ -108,9 +108,9 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
       <div className="office-hero">
         <div>
           <p className="eyebrow">Office rack / private pilot</p>
-          <h1>Tap. Pay. Take one.</h1>
+          <h1>{keychainBaseVariant ? `Pay ${money(keychainBaseVariant.unitAmount).replace(".00", "")}. Take one.` : "Pay. Take one."}</h1>
         </div>
-        <p>Confirm one is on the rack, pay securely, and take any available design.</p>
+        <p>Check the rack first, then pay securely and take any available design.</p>
       </div>
 
       {searchParams.get("checkout") === "canceled" ? (
@@ -147,8 +147,8 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
               </div>
               {keychainDealVariant ? (
                 <div className="office-deal-note">
-                  <b>Take more, save a little</b>
-                  <span>One for {money(keychainBaseVariant.unitAmount)} · Two or more for {money(keychainDealVariant.unitAmount)} each</span>
+                  <b>One for {money(keychainBaseVariant.unitAmount)}</b>
+                  <span>Taking two or more? They’re {money(keychainDealVariant.unitAmount)} each.</span>
                 </div>
               ) : null}
               <div className="office-buy-row">
@@ -175,19 +175,22 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
                     : loadingSlug === keychain.slug
                       ? "Opening Stripe…"
                       : keychainVariant
-                        ? `Pay ${money(keychainVariant.unitAmount * keychainQuantity)} & take ${keychainQuantity}`
+                        ? `Pay ${money(keychainVariant.unitAmount * keychainQuantity)} · Take ${keychainQuantity}`
                         : "Price unavailable"}
                 </button>
               </div>
               {error?.slug === keychain.slug ? (
                 <p className="checkout-error office-inline-error" role="alert" aria-live="polite">{error.message}</p>
               ) : null}
-              <ol className="office-steps">
-                <li><span>1</span>Make sure a keychain is physically available.</li>
-                <li><span>2</span>Pay here with Stripe.</li>
-                <li><span>3</span>Take any one from the rack. No confirmation needs to be shown.</li>
-              </ol>
               <p className="office-fine-print">Honor-system pickup · Choose only from current rack stock · Secure Stripe receipt by email</p>
+              <details className="office-rack-details">
+                <summary>How the honor system works</summary>
+                <ol className="office-steps">
+                  <li><span>1</span>Make sure a keychain is physically available.</li>
+                  <li><span>2</span>Pay here with Stripe.</li>
+                  <li><span>3</span>Take any one from the rack. No confirmation needs to be shown.</li>
+                </ol>
+              </details>
             </div>
           </article>
         ) : null}
