@@ -53,6 +53,7 @@ export function StoreShell({
   testMode: boolean;
 }) {
   const pathname = usePathname();
+  const isOfficeRoute = pathname === "/office";
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
@@ -123,17 +124,21 @@ export function StoreShell({
             : "Test shop · product preview · no live charges"}
         </div>
       ) : null}
-      <header className="site-header">
+      <header className={`site-header ${isOfficeRoute ? "site-header--office" : ""}`}>
         <Link className="brand" href="/" aria-label="Jake's 3D Print Shop home">
-          <BrandLogo />
+          <BrandLogo variant={isOfficeRoute ? "mark" : "full"} />
         </Link>
-        <nav aria-label="Primary navigation">
-          <Link className={pathname.startsWith("/products") ? "active" : ""} href="/products">Products</Link>
-          <Link className="studio-nav-link" href="/#studio">The studio</Link>
-          <Link className={pathname === "/cart" ? "active cart-link" : "cart-link"} href="/cart">
-            Cart <span aria-label={`${itemCount} items`}>{hydrated ? itemCount : 0}</span>
-          </Link>
-        </nav>
+        {isOfficeRoute ? (
+          <span className="office-shell-label">Office rack <small>Private pilot</small></span>
+        ) : (
+          <nav aria-label="Primary navigation">
+            <Link className={pathname.startsWith("/products") ? "active" : ""} href="/products">Products</Link>
+            <Link className="studio-nav-link" href="/#studio">The studio</Link>
+            <Link className={pathname === "/cart" ? "active cart-link" : "cart-link"} href="/cart">
+              Cart <span aria-label={`${itemCount} items`}>{hydrated ? itemCount : 0}</span>
+            </Link>
+          </nav>
+        )}
       </header>
       <main id="main-content">{children}</main>
       <footer className="site-footer">

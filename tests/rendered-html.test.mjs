@@ -90,9 +90,10 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   assert.match(officeHtml, /Keychain from the Rack/);
   assert.match(officeHtml, /office-keychain-assortment-illustration-v1\.png/);
   assert.match(officeHtml, /Illustrated assortment/);
+  assert.match(officeHtml, /Hand-drawn illustration of assorted keychains/);
   assert.match(officeHtml, /Modular Desk Organizer Set/);
-  assert.match(officeHtml, /Also available, if useful/);
-  assert.match(officeHtml, /No pitch/);
+  assert.match(officeHtml, /Optional desk add-on/);
+  assert.match(officeHtml, /Peek only if it sounds useful/);
   assert.match(officeHtml, /\$5\.00/);
   assert.match(officeHtml, /Take more, save a little/);
   assert.match(officeHtml, /Two or more for/);
@@ -110,6 +111,9 @@ test("office pilot is unlisted, mobile-ready, and isolated from the public catal
   assert.match(officeClient, /salesChannel: "office_nfc"/);
   assert.match(officeClient, /No confirmation needs to be shown/);
   assert.match(officeClient, /<details className="office-organizer-details">/);
+  assert.match(officeClient, /error\?\.slug === keychain\.slug/);
+  assert.match(officeClient, /error\?\.slug === organizer\.slug/);
+  assert.match(officeClient, /organizerOrderReady/);
   assert.match(officeClient, /variantForQuantity/);
   assert.match(officeClient, /keychainVariant\.unitAmount \* keychainQuantity/);
 });

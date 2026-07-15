@@ -28,7 +28,7 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
   const [keychainQuantity, setKeychainQuantity] = useState(1);
   const [organizerColor, setOrganizerColor] = useState(organizer?.colors[0] || "");
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ slug: string; message: string } | null>(null);
 
   useEffect(() => {
     trackStorefrontEvent("office_page_view", { salesChannel: "office_nfc" });
@@ -36,13 +36,19 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
 
   async function checkout(product: StoreProduct, quantity: number, color: string) {
     if (!checkoutEnabled) {
-      setError("This private preview is ready for a Stripe test catalog before checkout can open.");
+      setError({
+        slug: product.slug,
+        message: "This private preview needs its Stripe test catalog before checkout can open.",
+      });
       return;
     }
 
     const variant = variantForQuantity(product, quantity);
     if (!variant) {
-      setError("That quantity is not available right now. Refresh the page and try again.");
+      setError({
+        slug: product.slug,
+        message: "That quantity is not available right now. Refresh the page and try again.",
+      });
       return;
     }
     setLoadingSlug(product.slug);
@@ -81,7 +87,10 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
       });
       window.location.assign(result.url);
     } catch (checkoutError) {
-      setError(checkoutError instanceof Error ? checkoutError.message : "Checkout could not start.");
+      setError({
+        slug: product.slug,
+        message: checkoutError instanceof Error ? checkoutError.message : "Checkout could not start.",
+      });
       setLoadingSlug(null);
     }
   }
@@ -92,6 +101,7 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
   const organizerVariant = organizer ? variantForQuantity(organizer, 1) : undefined;
   const keychainSoldOut = keychain?.stockStatus === "sold_out";
   const organizerSoldOut = organizer?.stockStatus === "sold_out";
+  const organizerOrderReady = organizer?.photoReady && organizer.licenseStatus === "active";
 
   return (
     <section className="office-page">
@@ -100,7 +110,7 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
           <p className="eyebrow">Office rack / private pilot</p>
           <h1>Tap. Pay. Take one.</h1>
         </div>
-        <p>Buy from the rack in a few taps, then take a look at one useful desk upgrade being tested with the office first.</p>
+        <p>Confirm one is on the rack, pay securely, and take any available design.</p>
       </div>
 
       {searchParams.get("checkout") === "canceled" ? (
@@ -119,7 +129,10 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
         {keychain && keychainBaseVariant ? (
           <article className="office-offer office-offer--rack">
             <div className="office-offer-visual">
-              <ProductVisual product={keychain} />
+              <ProductVisual
+                product={keychain}
+                imageAlt="Hand-drawn illustration of assorted keychains; actual designs on the rack vary."
+              />
               <span className="office-visual-note">Illustrated assortment · Actual rack designs vary</span>
               <span className="office-price-tag">
                 <b>{money(keychainBaseVariant.unitAmount)}</b>
@@ -132,11 +145,6 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
                 <h2>{keychain.name}</h2>
                 <p>{keychain.description}</p>
               </div>
-              <ol className="office-steps">
-                <li><span>1</span>Make sure a keychain is physically available.</li>
-                <li><span>2</span>Pay here with Stripe.</li>
-                <li><span>3</span>Take any one from the rack. No confirmation needs to be shown.</li>
-              </ol>
               {keychainDealVariant ? (
                 <div className="office-deal-note">
                   <b>Take more, save a little</b>
@@ -146,7 +154,13 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
               <div className="office-buy-row">
                 <label>
                   <span>Quantity</span>
-                  <select value={keychainQuantity} onChange={(event) => setKeychainQuantity(Number(event.target.value))}>
+                  <select
+                    value={keychainQuantity}
+                    onChange={(event) => {
+                      setKeychainQuantity(Number(event.target.value));
+                      setError(null);
+                    }}
+                  >
                     {Array.from({ length: 10 }, (_, index) => index + 1).map((quantity) => <option key={quantity}>{quantity}</option>)}
                   </select>
                 </label>
@@ -165,6 +179,14 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
                         : "Price unavailable"}
                 </button>
               </div>
+              {error?.slug === keychain.slug ? (
+                <p className="checkout-error office-inline-error" role="alert" aria-live="polite">{error.message}</p>
+              ) : null}
+              <ol className="office-steps">
+                <li><span>1</span>Make sure a keychain is physically available.</li>
+                <li><span>2</span>Pay here with Stripe.</li>
+                <li><span>3</span>Take any one from the rack. No confirmation needs to be shown.</li>
+              </ol>
               <p className="office-fine-print">Honor-system pickup · Choose only from current rack stock · Secure Stripe receipt by email</p>
             </div>
           </article>
@@ -176,55 +198,63 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
               <ProductVisual product={organizer} />
             </div>
             <div className="office-organizer-hint-copy">
-              <p className="eyebrow">Also available, if useful</p>
+              <p className="eyebrow">Optional desk add-on</p>
               <h2 id="office-organizer-title">{organizer.name}</h2>
-              <p>I’m also testing a made-to-order four-piece organizer for anyone who could use a calmer desk. No pitch—details are here if you’re curious.</p>
-              <details className="office-organizer-details">
-                <summary>
-                  <span>See colors and what’s included</span>
-                  <b>{money(organizerVariant.unitAmount)}</b>
-                </summary>
-                <div className="office-organizer-details-body">
-                  <p>{organizer.description}</p>
-                  <ul className="office-includes">
-                    {organizer.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
-                  </ul>
-                  <fieldset className="office-colors">
-                    <legend>Choose a matte color <span>{organizerColor}</span></legend>
-                    <div className="color-row">
-                      {organizer.colors.map((color, index) => (
-                        <button
-                          className={organizerColor === color ? "selected" : ""}
-                          key={color}
-                          onClick={() => setOrganizerColor(color)}
-                          type="button"
-                          aria-label={`Choose ${color}`}
-                          aria-pressed={organizerColor === color}
-                        >
-                          <i aria-hidden="true" style={{ backgroundColor: organizer.colorHexes[index] }} />
-                          <span>{color.replace("Matte ", "")}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <button
-                    className="office-order-button"
-                    disabled={organizerSoldOut || loadingSlug !== null || !organizerColor}
-                    onClick={() => checkout(organizer, 1, organizerColor)}
-                    type="button"
-                  >
-                    {organizerSoldOut ? "Currently unavailable" : loadingSlug === organizer.slug ? "Opening Stripe…" : `Choose this set · ${money(organizerVariant.unitAmount)}`}
-                  </button>
-                  <p className="office-fine-print">Made to order · Delivered at work in 3–5 business days · No delivery fee</p>
-                  {!organizer.photoReady || organizer.licenseStatus !== "active" ? (
-                    <div className="test-callout office-launch-gate">
-                      <b>Private test listing</b>
-                      <span>Original photos and an active Meyui commercial license are required before real payments are enabled.</span>
-                    </div>
-                  ) : null}
-                </div>
-              </details>
+              <p>A four-piece, made-to-order set for a calmer desk. Peek only if it sounds useful.</p>
             </div>
+            <details className="office-organizer-details">
+              <summary>
+                <span>See the set</span>
+                <b>{money(organizerVariant.unitAmount)}</b>
+              </summary>
+              <div className="office-organizer-details-body">
+                <ul className="office-includes office-includes--compact">
+                  {organizer.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
+                </ul>
+                <fieldset className="office-colors">
+                  <legend>Choose a matte color <span>{organizerColor}</span></legend>
+                  <div className="color-row">
+                    {organizer.colors.map((color, index) => (
+                      <button
+                        className={organizerColor === color ? "selected" : ""}
+                        key={color}
+                        onClick={() => {
+                          setOrganizerColor(color);
+                          setError(null);
+                        }}
+                        type="button"
+                        aria-label={`Choose ${color}`}
+                        aria-pressed={organizerColor === color}
+                      >
+                        <i aria-hidden="true" style={{ backgroundColor: organizer.colorHexes[index] }} />
+                        <span>{color.replace("Matte ", "")}</span>
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <button
+                  className="office-order-button"
+                  disabled={organizerSoldOut || loadingSlug !== null || !organizerColor || !organizerOrderReady}
+                  onClick={() => checkout(organizer, 1, organizerColor)}
+                  type="button"
+                >
+                  {organizerSoldOut
+                    ? "Currently unavailable"
+                    : !organizerOrderReady
+                      ? "Preview only"
+                      : loadingSlug === organizer.slug
+                        ? "Opening Stripe…"
+                        : `Choose this set · ${money(organizerVariant.unitAmount)}`}
+                </button>
+                {error?.slug === organizer.slug ? (
+                  <p className="checkout-error office-inline-error" role="alert" aria-live="polite">{error.message}</p>
+                ) : null}
+                <p className="office-fine-print">Made to order · Delivered at work in 3–5 business days · No delivery fee</p>
+                {!organizerOrderReady ? (
+                  <p className="office-launch-gate-note">Preview only—original photos and an active Meyui commercial license are required before ordering opens.</p>
+                ) : null}
+              </div>
+            </details>
           </aside>
         ) : null}
       </div>
@@ -235,8 +265,6 @@ export function OfficePilot({ checkoutEnabled, keychain, organizer }: Props) {
           <span>Add the two office products to the Stripe test catalog to test payment without making a real charge.</span>
         </div>
       ) : null}
-      {error ? <p className="checkout-error office-error" role="alert" aria-live="polite">{error}</p> : null}
-
       <div className="office-browse">
         <div>
           <p className="eyebrow">More from the workbench</p>
