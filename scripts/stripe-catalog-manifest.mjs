@@ -199,8 +199,8 @@ export const catalog = [
   },
   {
     seedKey: "jakes-v1-juno-display-tray",
-    name: "Juno Display Tray",
-    description: "A large, architectural tray for giving candles, ceramics, and favorite objects a more intentional place to land.",
+    name: "Juno Storage Tray",
+    description: "A large, architectural tray with a concealed twist-lock compartment for keeping small essentials neatly out of sight.",
     images: sabreDesignJunoTrayImages,
     metadata: {
       shop_slug: "juno-display-tray",
@@ -214,12 +214,12 @@ export const catalog = [
       visibility: "public",
       photo_status: "ready",
       accent: "graphite",
-      detail_copy: "The one-piece solid tray has a wider footprint that makes it a sculptural display surface for a coffee table, console, or shelf rather than another small catchall.",
-      highlights: "Maker-listed footprint: 236 mm wide|One-piece solid tray|Creator profile reference: 1 plate · about 8.3 hours|Designed as a display surface rather than a storage container",
-      fit_note: "At 236 mm wide, this tray uses nearly the full main print area.",
+      detail_copy: "The two-piece Juno pairs a sculptural display lid with a roomy base. A twist-lock connection keeps jewelry, keys, keepsakes, and other small essentials tucked away beneath its architectural top.",
+      highlights: "Maker-listed footprint: 236 mm wide|Two-piece tray with a twist-lock storage compartment|Current X2D slice: 2 plates · 9 hours 56 minutes · 368.35 g|Hidden storage beneath a sculptural display surface",
+      fit_note: "At 236 mm wide, this tray uses nearly the full main print area. The lid twists onto the base to close the storage compartment.",
       material: "Bambu PLA Matte",
-      finish: "Fine matte surface with a low, sculptural edge",
-      care: "Decorative use only. Wipe with a soft, damp cloth and avoid sustained heat.",
+      finish: "Fine matte surfaces with a fitted twist-lock lid and hand-checked edges",
+      care: "Decorative storage only. Wipe with a soft, damp cloth and avoid sustained heat.",
       lead_time: "Printed to order in 3–5 business days",
       designer_name: "SabreDesign",
       designer_url: "https://makerworld.com/en/@SabreDesign",
@@ -231,7 +231,7 @@ export const catalog = [
       preview_message: "",
     },
     variants: [
-      ["Solid · 236 mm", 4200, "JUNO-SOLID", "236 mm-wide one-piece tray"],
+      ["Two-piece storage · 236 mm", 4200, "JUNO-STORAGE", "236 mm-wide two-piece twist-lock storage tray"],
     ],
   },
   {

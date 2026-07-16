@@ -49,7 +49,7 @@ export const expectedStripeCatalog: readonly ExpectedProduct[] = [
     seedKey: "jakes-v1-juno-display-tray",
     slug: "juno-display-tray",
     visibility: "public",
-    variants: [{ sku: "JUNO-SOLID", unitAmount: 4200 }],
+    variants: [{ sku: "JUNO-STORAGE", unitAmount: 4200 }],
   },
   {
     seedKey: "jakes-v1-sculptural-phone-stand",

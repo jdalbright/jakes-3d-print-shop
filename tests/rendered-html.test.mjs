@@ -133,7 +133,7 @@ test("server-renders the public SabreDesign collection with priced, orderable pr
   assert.match(html, /Japandi Tray/);
   assert.match(html, /Acorn Container/);
   assert.match(html, /Japandi Mushroom Container/);
-  assert.match(html, /Juno Display Tray/);
+  assert.match(html, /Juno Storage Tray/);
   assert.match(html, /Sculptural Phone Stand/);
   assert.match(html, /Made to order/);
   assert.match(html, /\$25\.00/);
@@ -184,7 +184,7 @@ test("office keychain pilot stays unlisted and isolated from the public made-to-
   assert.match(officeHtml, /href="\/products\/sculptural-phone-stand"/);
   assert.match(officeHtml, /Japandi Tray/);
   assert.match(officeHtml, /href="\/products\/japandi-tray"/);
-  assert.doesNotMatch(officeHtml, /Acorn Container|Japandi Mushroom Container|Juno Display Tray/);
+  assert.doesNotMatch(officeHtml, /Acorn Container|Japandi Mushroom Container|Juno Storage Tray/);
   assert.match(officeHtml, /Browse the full shop/);
   assert.match(officeHtml, /noindex/);
   assert.doesNotMatch(officeHtml, /Japandi Paper Towel Holder/);
@@ -287,7 +287,12 @@ test("server-renders all current SabreDesign products as orderable while retirin
   assert.match(mushroomHtml, /Base: Matte Ash Gray \(11102\)/);
   assert.match(mushroomHtml, /Cap: Matte Sakura Pink \(11201\)/);
   assert.match(mushroomHtml, /\/products\/sabredesign\/japandi-mushroom-container-01\.webp/);
-  assert.match(junoHtml, /Solid · 236 mm/);
+  assert.match(junoHtml, /Juno Storage Tray/);
+  assert.match(junoHtml, /Two-piece storage · 236 mm/);
+  assert.match(junoHtml, /twist-lock storage compartment/);
+  assert.match(junoHtml, /2 plates · 9 hours 56 minutes · 368\.35 g/);
+  assert.match(junoHtml, /236 mm-wide two-piece twist-lock storage tray/);
+  assert.doesNotMatch(junoHtml, /one-piece solid tray|Solid · 236 mm|JUNO-SOLID/);
   assert.match(junoHtml, /\$42\.00/);
   assert.match(junoHtml, /\/products\/sabredesign\/juno-display-tray-01\.webp/);
   assert.match(phoneStandHtml, /MakerWorld does not publish a dimensional spec/);
@@ -548,6 +553,8 @@ test("catalog sync is mode-safe, idempotent, and shared by test and live Stripe"
   assert.match(manifest, /jakes-v1-acorn-container/);
   assert.match(manifest, /jakes-v1-japandi-mushroom-container/);
   assert.match(manifest, /jakes-v1-juno-display-tray/);
+  assert.match(manifest, /JUNO-STORAGE/);
+  assert.doesNotMatch(manifest, /JUNO-SOLID/);
   assert.match(manifest, /jakes-v1-sculptural-phone-stand/);
   assert.match(manifest, /jakes-office-keychain-rack/);
   assert.match(manifest, /OFFICE-KEYCHAIN-MULTI/);
