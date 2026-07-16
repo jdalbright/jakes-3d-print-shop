@@ -7,7 +7,7 @@ import {
   confirmedBambuPlaMatteColorGroups,
   confirmedBambuPlaMatteColors,
 } from "./lib/filament-inventory";
-import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "./lib/store-config";
+import { PUBLIC_PICKUP_NOTICE, STANDARD_US_SHIPPING_CENTS } from "./lib/store-config";
 import type { StoreProduct } from "./lib/types";
 
 const heroProductSlugs = [
@@ -138,12 +138,12 @@ export default async function Home() {
 
       <section className="fulfillment-section" aria-labelledby="fulfillment-heading">
         <div className="fulfillment-heading">
-          <h2 id="fulfillment-heading">Pickup in Raleigh or ship across the U.S.</h2>
+          <h2 id="fulfillment-heading">Off-site pickup in Raleigh or ship across the U.S.</h2>
           <p>Choose pickup or shipping after adding a product to your cart.</p>
           <Link className="text-link" href="/products">Shop all products <span aria-hidden="true">→</span></Link>
         </div>
         <dl className="fulfillment-list">
-          <div><dt>Raleigh pickup</dt><dd>Pay online, then Jake will email you to arrange a private handoff in {PICKUP_AREA}.</dd><span>Free</span></div>
+          <div><dt>Raleigh pickup</dt><dd>Pay online. {PUBLIC_PICKUP_NOTICE} Jake will email you to coordinate the handoff location and time.</dd><span>Free</span></div>
           <div><dt>U.S. shipping</dt><dd>One flat {money(STANDARD_US_SHIPPING_CENTS)} shipping charge per order.</dd><span>3–7 days</span></div>
           <div><dt>Payment</dt><dd>Stripe securely handles card payment and sends the receipt.</dd><span>Stripe</span></div>
         </dl>

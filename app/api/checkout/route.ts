@@ -11,7 +11,7 @@ import {
   readJsonBody,
 } from "../../lib/request-security";
 import { getStripe, getValidatedSiteOrigin, isLiveLaunchEnabled } from "../../lib/stripe";
-import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
+import { PUBLIC_PICKUP_NOTICE, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
 import type { Fulfillment } from "../../lib/types";
 
 type CheckoutItem = { priceId: string; quantity: number; color: string };
@@ -360,8 +360,8 @@ export async function POST(request: Request) {
               custom_text: {
                 submit: {
                   message: pickupNote
-                    ? "Jake will use your pickup note and email after payment to confirm the handoff."
-                    : `${PICKUP_AREA} pickup: Jake will email you after payment to coordinate the private handoff location.`,
+                    ? `${PUBLIC_PICKUP_NOTICE} Jake will use your pickup note and email after payment to confirm the handoff.`
+                    : `${PUBLIC_PICKUP_NOTICE} Jake will email you after payment to coordinate the handoff location and time.`,
                 },
               },
             }),

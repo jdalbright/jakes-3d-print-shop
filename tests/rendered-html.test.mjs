@@ -87,7 +87,8 @@ test("server-renders a focused homepage with a varied collection and clear order
     assert.match(html, new RegExp(`Matte ${color.name}`));
     assert.match(html, new RegExp(`Bambu / ${color.code}`));
   }
-  assert.match(html, /Pickup in Raleigh or ship across the U\.S\./);
+  assert.match(html, /Off-site pickup in Raleigh or ship across the U\.S\./);
+  assert.match(html, /Raleigh pickup is an off-site handoff only—never at Jake’s home or studio\./);
   assert.match(html, /Stripe securely handles card payment/);
   assert.match(html, /\$12\.00/);
   assert.doesNotMatch(html, /Everyday objects, printed with intent|Curated carefully|Printed personally|Made here\. Sent where you are|See what’s on the bench/);
@@ -302,6 +303,30 @@ test("server-renders all current SabreDesign products as orderable while retirin
   assert.match(phoneStandHtml, /\$24\.00/);
   assert.match(phoneStandHtml, /\/products\/sabredesign\/sculptural-phone-stand-01\.webp/);
   assert.match(await policy.text(), /Shipping &amp; pickup/);
+});
+
+test("public Raleigh pickup is consistently off-site and never at the seller's home", async () => {
+  const [home, product, policy, cart, checkout, success, configurator, office] = await Promise.all([
+    render(),
+    render("/products/japandi-tray"),
+    render("/policies/shipping"),
+    readFile(new URL("../app/cart/CartPage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/checkout/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/order/success/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ProductConfigurator.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/office/OfficePilot.tsx", import.meta.url), "utf8"),
+  ]);
+  const publicPickupNotice = /Raleigh pickup is an off-site handoff only—never at Jake’s home or studio\./;
+  for (const response of [home, product, policy]) {
+    assert.equal(response.status, 200);
+    assert.match(await response.text(), publicPickupNotice);
+  }
+  for (const source of [cart, checkout, success]) {
+    assert.match(source, /PUBLIC_PICKUP_NOTICE/);
+  }
+  assert.match(cart, /Off-site \{PICKUP_AREA\} pickup/);
+  assert.match(configurator, /Free off-site Raleigh handoff/);
+  assert.doesNotMatch(office, /PUBLIC_PICKUP_NOTICE|off-site Raleigh/);
 });
 
 test("catalog metadata normalizes galleries and swatches safely", () => {

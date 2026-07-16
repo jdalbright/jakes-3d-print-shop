@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
+import { PUBLIC_PICKUP_NOTICE, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
 
 const EFFECTIVE_DATE = "July 16, 2026";
 const SUPPORT_EMAIL = process.env.CONTACT_EMAIL?.trim() || "hello@jalbright.dev";
@@ -14,11 +14,11 @@ const policies = {
   shipping: {
     title: "Shipping & pickup",
     description: "Production timing, U.S. shipping, and Raleigh pickup details for Jake’s 3D Print Shop.",
-    intro: "Each item is prepared in Raleigh, North Carolina, then shipped in the U.S. or handed off through prepaid local pickup.",
+    intro: "Each item is prepared in Raleigh, North Carolina, then shipped in the U.S. or handed off through prepaid off-site local pickup.",
     sections: [
       ["Production time", "Most orders are printed and prepared within 3–5 business days. This is production time, not carrier transit time. If an order needs longer, the shop will email you with an updated estimate."],
       ["U.S. shipping", `Standard U.S. shipping is a flat ${shippingPrice} per order. A delivery estimate begins after the carrier accepts the package. Carrier delays are outside the shop’s direct control, but the shop will help investigate a delayed or missing package.`],
-      ["Raleigh pickup", `Prepaid pickup in ${PICKUP_AREA} is free. The exact handoff location is kept private and is not published on the site. The shop will email you when the order is ready and coordinate a pickup time and location.`],
+      ["Raleigh pickup", `Prepaid pickup is free. ${PUBLIC_PICKUP_NOTICE} The exact handoff location is not published on the site. The shop will email you when the order is ready and coordinate the location and time.`],
       ["Addresses and delivery issues", "Please enter a complete, accurate shipping address at checkout. Email the shop immediately if it needs to be corrected. Once a package has shipped, an address change may not be possible. If tracking shows a problem, contact the shop so it can work with the carrier."],
     ],
   },

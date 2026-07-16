@@ -167,7 +167,7 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
       {previewMessage ? <p className="product-preview-note" role="status">{previewMessage}</p> : null}
       <div className="fulfillment-chips">
         {product.ship ? <span>U.S. shipping</span> : null}
-        {product.pickup ? <span>Free Raleigh pickup</span> : null}
+        {product.pickup ? <span>Free off-site Raleigh handoff</span> : null}
         <span>{previewOnly ? "Ordering opens after approval" : "Secure Stripe checkout"}</span>
       </div>
       {added ? <Link className="added-link" href="/cart">View cart</Link> : null}

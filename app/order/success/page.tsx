@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type Stripe from "stripe";
 import { getStripe } from "../../lib/stripe";
-import { PICKUP_AREA } from "../../lib/store-config";
+import { PICKUP_AREA, PUBLIC_PICKUP_NOTICE } from "../../lib/store-config";
 import { PurchasedCartCleanup } from "./PurchasedCartCleanup";
 
 export const dynamic = "force-dynamic";
@@ -99,8 +99,8 @@ export default async function SuccessPage({ searchParams }: Props) {
       : "Jake will deliver your made-to-order item at work when it is ready."
     : pickup
       ? pickupNoteReceived
-        ? "Jake received your pickup note and will email you to confirm the handoff."
-        : `Jake will email you to coordinate a private pickup handoff in ${PICKUP_AREA}.`
+        ? `${PUBLIC_PICKUP_NOTICE} Jake received your pickup note and will email you to confirm the handoff.`
+        : `${PUBLIC_PICKUP_NOTICE} Jake will email you to coordinate the handoff location and time.`
       : "You’ll receive a receipt now and an update when your prints are ready to ship.";
 
   return (

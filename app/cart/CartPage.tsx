@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Fulfillment } from "../lib/types";
-import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../lib/store-config";
+import { PICKUP_AREA, PUBLIC_PICKUP_NOTICE, STANDARD_US_SHIPPING_CENTS } from "../lib/store-config";
 import { trackStorefrontEvent } from "../lib/storefront-events";
 import { ProductVisual } from "../components/ProductVisual";
 import { useStore } from "../components/StoreShell";
@@ -244,7 +244,7 @@ export function CartPage() {
                   setFulfillment("pickup");
                   setCartFeedback((current) => ({ id: current.id + 1, itemKey: "" }));
                 }} type="button" aria-pressed={fulfillment === "pickup"}>
-                  <span><b>{PICKUP_AREA} pickup</b><small>Work with Jake? Add a work-pickup note below.</small></span><i>Free</i>
+                  <span><b>Off-site {PICKUP_AREA} pickup</b><small>{PUBLIC_PICKUP_NOTICE}</small></span><i>Free</i>
                 </button>
               </div>
               {fulfillment === "pickup" ? (
@@ -257,7 +257,7 @@ export function CartPage() {
                     rows={3}
                     value={pickupNote}
                   />
-                  <small>Just write “work pickup”—don’t include an employer name or workplace address.</small>
+                  <small>Work with Jake? Just write “work pickup”—don’t include an employer name or workplace address.</small>
                 </label>
               ) : null}
               {excludedCount ? <p className="order-warning">{excludedCount} item{excludedCount === 1 ? " is" : "s are"} unavailable for this fulfillment method and won’t be checked out.</p> : null}
