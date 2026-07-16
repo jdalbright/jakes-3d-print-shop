@@ -10,17 +10,17 @@ const mono = DM_Mono({ subsets: ["latin"], variable: "--font-mono", weight: ["40
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
   title: { default: "Jake’s 3D Print Shop", template: "%s · Jake’s 3D Print Shop" },
-  description: "Design-led desk and home objects, made in small batches in Raleigh, NC.",
+  description: "Small-batch 3D-printed home and desk goods, made to order in Raleigh, NC.",
   openGraph: {
     title: "Jake’s 3D Print Shop",
-    description: "Design-led desk and home objects, made in small batches in Raleigh, NC.",
+    description: "Small-batch 3D-printed home and desk goods, made to order in Raleigh, NC.",
     type: "website",
-    images: [{ url: "/products/onami-2-headphone-stand-hero-v3.png", alt: "Onami 2 Headphone Stand in slate blue" }],
+    images: [{ url: "/og.png", alt: "Jake’s 3D Print Shop collection" }],
   },
   twitter: {
     card: "summary_large_image",
-    description: "Design-led desk and home objects, made in small batches in Raleigh, NC.",
-    images: ["/products/onami-2-headphone-stand-hero-v3.png"],
+    description: "Small-batch 3D-printed home and desk goods, made to order in Raleigh, NC.",
+    images: ["/og.png"],
   },
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };

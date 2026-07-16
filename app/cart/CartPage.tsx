@@ -86,16 +86,23 @@ export function CartPage() {
               stockStatus: "in_stock" as const, image: item.image, accent: item.accent, variants: [],
             };
             const unavailable = fulfillment === "shipping" ? !item.ship : !item.pickup;
+            const minQuantity = Math.max(1, item.minQuantity ?? 1);
+            const maxQuantity = Math.max(minQuantity, Math.min(10, item.maxQuantity ?? 10));
             return (
               <article className={`cart-item ${unavailable ? "unavailable" : ""}`} key={`${item.priceId}-${item.color}`}>
                 <Link href={`/products/${item.slug}`}><ProductVisual product={product} /></Link>
                 <div className="cart-item-copy">
-                  <div><p className="eyebrow">{item.sizeLabel}</p><h2>{item.name}</h2><p>{item.color}</p></div>
+                  <div>
+                    <p className="eyebrow">{item.sizeLabel}</p>
+                    <h2>{item.name}</h2>
+                    <p className="cart-color-label">{item.color}</p>
+                    {item.colorDetail ? <p className="cart-color-detail">{item.colorDetail}</p> : null}
+                  </div>
                   {unavailable ? <span className="item-warning">Not available for {fulfillment}</span> : null}
                   <div className="cart-item-actions">
                     <label>Qty
                       <select value={item.quantity} onChange={(event) => updateQuantity(item.priceId, item.color, Number(event.target.value))}>
-                        {Array.from({ length: 10 }, (_, index) => index + 1).map((qty) => <option key={qty}>{qty}</option>)}
+                        {Array.from({ length: maxQuantity - minQuantity + 1 }, (_, index) => minQuantity + index).map((qty) => <option key={qty}>{qty}</option>)}
                       </select>
                     </label>
                     <button type="button" onClick={() => removeItem(item.priceId, item.color)}>Remove</button>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { parseColorwaysMetadata } from "../../lib/catalog-metadata";
+import { commercialMetadataOrderReady } from "../../lib/commercial-license";
 import { getStripe, isLiveLaunchEnabled } from "../../lib/stripe";
 import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
 import type { Fulfillment } from "../../lib/types";
@@ -86,6 +88,9 @@ export async function POST(request: Request) {
       }
       const colors = (product.metadata.colors || "As shown").split(/[|,]/).map((color) => color.trim().toLowerCase());
       if (!colors.includes(item.color.toLowerCase())) throw new Error("invalid_color");
+      const colorways = parseColorwaysMetadata(product.metadata.colorways);
+      const selectedColorway = colorways.find((colorway) => colorway.label.toLowerCase() === item.color.toLowerCase());
+      if (product.metadata.colorways && !selectedColorway) throw new Error("invalid_color");
       if (product.metadata.stock_status === "sold_out") throw new Error("sold_out");
       const minQuantity = quantityBound(price.metadata.min_quantity);
       const maxQuantity = quantityBound(price.metadata.max_quantity);
@@ -94,7 +99,11 @@ export async function POST(request: Request) {
       }
       if (minQuantity !== null && maxQuantity !== null && minQuantity > maxQuantity) throw new Error("invalid_price");
       const licenseStatus = product.metadata.license_status;
-      if (isLiveLaunchEnabled() && licenseStatus !== "active" && licenseStatus !== "not_required") {
+      const hasActiveLicense = licenseStatus === "active" || licenseStatus === "not_required";
+      if (!commercialMetadataOrderReady(product.metadata)) {
+        throw new Error("preview_only");
+      }
+      if (isLiveLaunchEnabled() && !hasActiveLicense) {
         throw new Error("license_unavailable");
       }
       if (isOfficeCheckout) {
@@ -102,15 +111,15 @@ export async function POST(request: Request) {
         if (trustedOfficeFulfillment !== "take_now" && trustedOfficeFulfillment !== "work_delivery") {
           throw new Error("invalid_channel");
         }
-        if (isLiveLaunchEnabled() && product.metadata.photo_status !== "ready") {
-          throw new Error("photo_unavailable");
-        }
         officeFulfillment = trustedOfficeFulfillment;
       }
       if (body.fulfillment === "shipping" && !metadataBool(product.metadata.ship)) throw new Error("shipping_unavailable");
       if (body.fulfillment === "pickup" && !metadataBool(product.metadata.pickup)) throw new Error("pickup_unavailable");
       subtotal += price.unit_amount * item.quantity;
-      metadata[`item_${index + 1}`] = `${price.id}|${item.quantity}|${item.color}`.slice(0, 500);
+      const selectedColor = selectedColorway
+        ? `${item.color}|Base: ${selectedColorway.baseColor}; Cap: ${selectedColorway.capColor}`
+        : item.color;
+      metadata[`item_${index + 1}`] = `${price.id}|${item.quantity}|${selectedColor}`.slice(0, 500);
     });
 
     const configuredSiteUrl = process.env.SITE_URL?.replace(/\/$/, "");
@@ -187,6 +196,8 @@ export async function POST(request: Request) {
         ? "This product is not available for live checkout yet."
       : message === "photo_unavailable"
         ? "Original product photos are required before this listing can accept live payments."
+      : message === "preview_only"
+        ? "This made-to-order product is a preview until its commercial license, original photo, and required seller verification are in place."
       : message === "invalid_channel"
         ? "This item is not available through that checkout page."
       : message === "invalid_quantity_tier"

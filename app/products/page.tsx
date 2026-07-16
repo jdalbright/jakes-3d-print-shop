@@ -14,7 +14,7 @@ export default async function ProductsPage() {
     <section className="products-page">
       <div className="products-intro">
         <h1>Modern objects.</h1>
-        <p>Two useful forms for desk and home, selected for small-batch making and careful finishing in Raleigh.</p>
+        <p>Shop a focused first run of SabreDesign objects, printed to order in Jake’s Raleigh studio.</p>
       </div>
       <CatalogGrid products={products} showFilters={products.length > 1} />
     </section>

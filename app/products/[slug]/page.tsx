@@ -5,6 +5,7 @@ import { ProductConfigurator } from "../../components/ProductConfigurator";
 import { ProductGallery } from "../../components/ProductGallery";
 import { ProductVisual } from "../../components/ProductVisual";
 import { getCatalogProduct } from "../../lib/catalog";
+import { commercialPrintOrderReady, commercialPrintPreviewMessage } from "../../lib/commercial-license";
 import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
 import type { StoreProduct } from "../../lib/types";
 
@@ -27,11 +28,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { product } = await getCatalogProduct(slug);
   if (!product) return { title: "Print not found" };
   const socialImage = product.images[0] || product.image;
+  const previewOnly = !commercialPrintOrderReady(product);
 
   return {
     title: product.name,
     description: product.description,
-    robots: product.demo || product.licenseStatus !== "active" ? { index: false, follow: false } : undefined,
+    robots: product.demo || product.licenseStatus !== "active" || previewOnly ? { index: false, follow: false } : undefined,
     openGraph: {
       title: product.name,
       description: product.description,
@@ -53,6 +55,8 @@ export default async function ProductPage({ params }: Props) {
   const { product } = catalog;
   if (!product) notFound();
 
+  const previewMessage = commercialPrintPreviewMessage(product);
+  const previewOnly = !commercialPrintOrderReady(product);
   const related = relatedProducts(product, catalog.products);
   const productUrl = new URL(`/products/${product.slug}`, process.env.SITE_URL || "http://localhost:3000").toString();
   const availability = product.stockStatus === "sold_out"
@@ -60,7 +64,7 @@ export default async function ProductPage({ params }: Props) {
     : product.stockStatus === "made_to_order"
       ? "https://schema.org/PreOrder"
       : "https://schema.org/InStock";
-  const structuredData = product.demo || product.licenseStatus !== "active" ? null : {
+  const structuredData = product.demo || product.licenseStatus !== "active" || previewOnly ? null : {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
@@ -91,7 +95,7 @@ export default async function ProductPage({ params }: Props) {
       <div className="product-layout">
         <ProductGallery product={product} />
         <aside className="product-info">
-          <p className="eyebrow">{product.category} · {product.demo ? "Demo listing" : "Small batch"}</p>
+          <p className="eyebrow">{product.category} · {product.demo || previewMessage ? "Preview listing" : "Small batch"}</p>
           <h1>{product.name}</h1>
           <p className="product-description">{product.description}</p>
           {product.designerName ? (
@@ -156,14 +160,16 @@ export default async function ProductPage({ params }: Props) {
           <div className={`product-grid related-grid related-count-${related.length}`}>
             {related.map((item) => {
               const price = Math.min(...item.variants.map((variant) => variant.unitAmount));
+              const optionCount = item.colorways?.length || item.colors.length;
+              const optionLabel = item.colorways?.length ? "colorway" : "color";
               return (
                 <article className="product-card" key={item.id}>
                   <Link href={`/products/${item.slug}`} aria-label={`View ${item.name}`}><ProductVisual product={item} /></Link>
                   <div className="product-card-copy">
                     <div><p className="eyebrow">{item.category}</p><h3><Link href={`/products/${item.slug}`}>{item.name}</Link></h3></div>
-                    <p className="price">{item.variants.length > 1 ? "From " : ""}{money(price)}</p>
+                  <p className="price">{item.pricingPending ? "Pricing in final testing" : <>{item.variants.length > 1 ? "From " : ""}{money(price)}</>}</p>
                   </div>
-                  <div className="product-meta"><span>{item.stockStatus === "made_to_order" ? "Made to order" : "Ready soon"}</span><span>{item.colors.length} color{item.colors.length === 1 ? "" : "s"}</span></div>
+                  <div className="product-meta"><span>{item.stockStatus === "made_to_order" ? "Made to order" : "Ready soon"}</span><span>{optionCount} {optionLabel}{optionCount === 1 ? "" : "s"}</span></div>
                 </article>
               );
             })}

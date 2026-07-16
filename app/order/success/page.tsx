@@ -72,7 +72,7 @@ export default async function SuccessPage({ searchParams }: Props) {
   const nextMessage = officeCheckout
     ? officeFulfillment === "take_now"
       ? "Payment confirmed—take one available keychain from the rack. You do not need to show anyone this screen."
-      : "Jake will deliver your made-to-order set at work, usually within 3–5 business days."
+      : "Jake will deliver your made-to-order item at work when it is ready."
     : pickup
       ? `Jake will email you to coordinate a private pickup handoff in ${PICKUP_AREA}.`
       : "You’ll receive a receipt now and an update when your prints are ready to ship.";

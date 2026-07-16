@@ -1,56 +1,7 @@
 import type { StoreProduct } from "./types";
+import { sabreDesignPaperTowelHolderImages } from "./sabredesign-media";
 
-export const demoProducts: StoreProduct[] = [
-  {
-    id: "demo-onami-2",
-    slug: "onami-2-headphone-stand",
-    name: "Onami 2 Headphone Stand",
-    description:
-      "A sculptural, wave-inspired stand with a broad curved cradle that keeps over-ear headphones supported and easy to reach.",
-    category: "Desk",
-    colors: ["Slate Blue", "Graphite", "Warm Sand"],
-    featured: true,
-    pickup: true,
-    ship: true,
-    stockStatus: "made_to_order",
-    visibility: "public",
-    photoReady: true,
-    image: "/products/onami-2-headphone-stand-hero-v3.png",
-    images: [
-      "/products/onami-2-headphone-stand-hero-v3.png",
-      "/products/onami-2-headphone-stand-rear-v3.png",
-      "/products/onami-2-headphone-stand-detail-v3.png",
-    ],
-    accent: "ocean",
-    colorHexes: ["#71839a", "#414844", "#cdbb97"],
-    detailCopy:
-      "The Onami 2 turns a functional desktop stand into a calm, wave-like form. Its widened top spreads pressure across the headband, while the open base keeps the footprint visually light.",
-    highlights: [
-      "Wide rounded support for over-ear headbands",
-      "Continuous wave channels from base to cradle",
-      "Compact cantilevered footprint",
-      "Optional silicone feet for added grip",
-    ],
-    material: "Matte PLA",
-    finish: "Fine visible print layers with hand-checked support surfaces",
-    care: "Wipe with a soft, damp cloth. Keep away from sustained heat and direct sunlight.",
-    leadTime: "Printed to order in 3–5 business days",
-    designerName: "Meyui",
-    designerUrl: "https://makerworld.com/en/@Meyui",
-    sourceModelUrl:
-      "https://makerworld.com/en/models/2979027-onami-2-headphone-stand#profileId-3342100",
-    licenseStatus: "pending",
-    demo: true,
-    variants: [
-      {
-        priceId: "demo_onami2_standard",
-        sizeLabel: "Standard",
-        unitAmount: 3400,
-        currency: "usd",
-        sku: "ONAMI2-STD",
-      },
-    ],
-  },
+const baseDemoProducts: StoreProduct[] = [
   {
     id: "demo-japandi-paper-towel-holder",
     slug: "japandi-paper-towel-holder",
@@ -58,21 +9,22 @@ export const demoProducts: StoreProduct[] = [
     description:
       "A sculptural countertop holder that keeps a paper towel roll contained while leaving the next sheet easy to reach.",
     category: "Home",
-    colors: ["Warm Sand", "Cocoa", "Matte White"],
+    colors: [
+      "Matte Ivory White (11100)",
+      "Matte Desert Tan (11401)",
+      "Matte Dark Brown (11801)",
+      "Matte Charcoal (11101)",
+    ],
     featured: true,
     pickup: true,
     ship: true,
     stockStatus: "made_to_order",
     visibility: "public",
     photoReady: true,
-    image: "/products/japandi-paper-towel-holder-hero-v1.png",
-    images: [
-      "/products/japandi-paper-towel-holder-hero-v1.png",
-      "/products/japandi-paper-towel-holder-empty-v1.png",
-      "/products/japandi-paper-towel-holder-detail-v1.png",
-    ],
+    image: sabreDesignPaperTowelHolderImages[0],
+    images: [...sabreDesignPaperTowelHolderImages],
     accent: "clay",
-    colorHexes: ["#cbb89d", "#705546", "#ece8df"],
+    colorHexes: ["#ffffff", "#e8dbb7", "#7d6556", "#000000"],
     detailCopy:
       "The Japandi holder turns an everyday kitchen roll into a calmer countertop object. Its ribbed outer sleeve adds grip and texture, while the open front keeps the working edge visible and accessible.",
     highlights: [
@@ -83,7 +35,7 @@ export const demoProducts: StoreProduct[] = [
     ],
     fitNote:
       "Measure your unopened roll at its widest point. Standard Roll fits up to 4.4 in (113 mm); Jumbo / Warehouse Roll fits up to 5.9 in (150 mm).",
-    material: "Matte PLA",
+    material: "Bambu PLA Matte",
     finish: "Fine vertical ribbing with hand-checked edges and surfaces",
     care: "Wipe with a soft, damp cloth. Do not place in a dishwasher or near sustained heat.",
     leadTime: "Printed to order in 3–5 business days",
@@ -91,8 +43,9 @@ export const demoProducts: StoreProduct[] = [
     designerUrl: "https://makerworld.com/en/@SabreDesign",
     sourceModelUrl:
       "https://makerworld.com/en/models/1455387-paper-towel-holder-stand-japandi#profileId-1516726",
-    licenseStatus: "pending",
-    demo: true,
+    requiresCommercialLicense: true,
+    licenseStatus: "active",
+    demo: false,
     variants: [
       {
         priceId: "demo_japandi_paper_towel_standard",
@@ -166,48 +119,6 @@ export const officeDemoProducts: StoreProduct[] = [
       },
     ],
   },
-  {
-    id: "demo-office-modular-desk-organizer",
-    slug: "modular-desk-organizer-set",
-    name: "Modular Desk Organizer Set",
-    description: "A coordinated four-piece system with a phone stand, pen holder, storage cup, and base tray.",
-    category: "Desk",
-    colors: ["Matte Bone White", "Matte Charcoal", "Matte Dark Green"],
-    featured: false,
-    pickup: true,
-    ship: false,
-    stockStatus: "made_to_order",
-    visibility: "office",
-    officeFulfillment: "work_delivery",
-    photoReady: false,
-    image: null,
-    images: [],
-    accent: "moss",
-    colorHexes: ["#cbc6b8", "#000000", "#68724d"],
-    detailCopy: "Four calm, functional pieces can be arranged to fit a compact desk while keeping a phone, pens, and small essentials within reach.",
-    highlights: [
-      "Classic phone stand",
-      "Dedicated pen holder",
-      "Storage cup for small essentials",
-      "Base tray keeps the set together",
-    ],
-    material: "Bambu PLA Matte",
-    finish: "Matte surface with hand-checked edges and fit",
-    care: "Wipe with a soft, damp cloth. Keep away from sustained heat and direct sunlight.",
-    leadTime: "Printed to order and delivered at work in 3–5 business days",
-    designerName: "Meyui",
-    designerUrl: "https://makerworld.com/en/@Meyui",
-    sourceModelUrl: "https://makerworld.com/en/models/2087519-modular-desk-organizer-system-iphone-stand-module#profileId-2256937",
-    licenseStatus: "pending",
-    demo: true,
-    variants: [
-      {
-        priceId: "demo_office_modular_desk_organizer",
-        sizeLabel: "Complete four-piece set",
-        unitAmount: 3000,
-        currency: "usd",
-        sku: "OFFICE-MEYUI-DESK-SET",
-      },
-    ],
-  },
 ];
+
+export const demoProducts = baseDemoProducts;

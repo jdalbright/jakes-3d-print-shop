@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { storefrontProductStatus } from "../lib/commercial-license";
 import type { StoreProduct } from "../lib/types";
 import { ProductVisual } from "./ProductVisual";
 
@@ -44,6 +45,9 @@ export function CatalogGrid({
       <div className={`product-grid product-count-${visible.length}`}>
         {visible.map((product) => {
           const price = Math.min(...product.variants.map((variant) => variant.unitAmount));
+          const status = storefrontProductStatus(product);
+          const optionCount = product.colorways?.length || product.colors.length;
+          const optionLabel = product.colorways?.length ? "colorway" : "color";
           return (
             <article className="product-card" key={product.id}>
               <Link href={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
@@ -54,11 +58,11 @@ export function CatalogGrid({
                   <p className="eyebrow">{product.category}</p>
                   <h3><Link href={`/products/${product.slug}`}>{product.name}</Link></h3>
                 </div>
-                <p className="price">{product.variants.length > 1 ? "From " : ""}{money(price)}</p>
+                <p className="price">{product.pricingPending ? "Pricing in final testing" : <>{product.variants.length > 1 ? "From " : ""}{money(price)}</>}</p>
               </div>
               <div className="product-meta">
-                <span>{product.stockStatus === "made_to_order" ? "Made to order" : product.stockStatus === "sold_out" ? "Sold out" : "Ready soon"}</span>
-                <span>{product.colors.length} color{product.colors.length === 1 ? "" : "s"}</span>
+                <span>{status}</span>
+                <span>{optionCount} {optionLabel}{optionCount === 1 ? "" : "s"}</span>
               </div>
             </article>
           );

@@ -1,26 +1,49 @@
 import "server-only";
 import type Stripe from "stripe";
-import { buildColorHexes, normalizeProductImages, splitMetadata, textMetadata } from "./catalog-metadata";
+import { buildColorHexes, normalizeProductImages, parseColorwaysMetadata, splitMetadata, textMetadata } from "./catalog-metadata";
+import { catalogPreviewProducts } from "./catalog-preview-products";
 import { demoProducts, officeDemoProducts } from "./demo-catalog";
+import {
+  sabreDesignAcornContainerImages,
+  sabreDesignJapandiTrayImages,
+  sabreDesignJunoTrayImages,
+  sabreDesignMushroomContainerImages,
+  sabreDesignPaperTowelHolderImages,
+  sabreDesignPhoneStandImages,
+} from "./sabredesign-media";
 import { getStripe } from "./stripe";
-import type { CatalogResult, CatalogVisibility, OfficeFulfillment, ProductLicenseStatus, StoreProduct } from "./types";
+import type { CatalogResult, CatalogVisibility, OfficeFulfillment, ProductColorway, ProductLicenseStatus, StoreProduct } from "./types";
 
 const accents = ["clay", "ocean", "graphite", "moss", "rose", "yellow"];
 const localProductImages: Record<string, string[]> = {
   "office-keychain-rack": [
     "/products/office-keychain-assortment-illustration-v1.png",
   ],
-  "onami-2-headphone-stand": [
-    "/products/onami-2-headphone-stand-hero-v3.png",
-    "/products/onami-2-headphone-stand-rear-v3.png",
-    "/products/onami-2-headphone-stand-detail-v3.png",
-  ],
   "japandi-paper-towel-holder": [
-    "/products/japandi-paper-towel-holder-hero-v1.png",
-    "/products/japandi-paper-towel-holder-empty-v1.png",
-    "/products/japandi-paper-towel-holder-detail-v1.png",
+    ...sabreDesignPaperTowelHolderImages,
+  ],
+  "japandi-tray": [
+    ...sabreDesignJapandiTrayImages,
+  ],
+  "acorn-container": [
+    ...sabreDesignAcornContainerImages,
+  ],
+  "japandi-mushroom-container": [
+    ...sabreDesignMushroomContainerImages,
+  ],
+  "juno-display-tray": [
+    ...sabreDesignJunoTrayImages,
+  ],
+  "sculptural-phone-stand": [
+    ...sabreDesignPhoneStandImages,
   ],
 };
+
+function withCatalogPreviews(products: StoreProduct[], visibility: CatalogVisibility) {
+  if (visibility !== "public") return products;
+  const existingSlugs = new Set(products.map((product) => product.slug));
+  return [...products, ...catalogPreviewProducts.filter((product) => !existingSlugs.has(product.slug))];
+}
 
 function boolMetadata(value: string | undefined, fallback = false) {
   if (value === undefined) return fallback;
@@ -83,6 +106,10 @@ function productFromStripe(
       : "pending";
   const accent = product.metadata.accent || accents[index % accents.length];
   const colors = splitMetadata(product.metadata.colors, ["As shown"]);
+  const parsedColorways = parseColorwaysMetadata(product.metadata.colorways);
+  const colorways = colors
+    .map((color) => parsedColorways.find((item) => item.label.toLowerCase() === color.toLowerCase()))
+    .filter((item): item is ProductColorway => Boolean(item));
   const fallbackImages = localProductImages[slug] || [];
   const stripeImages = normalizeProductImages(product.images, null);
   const images = stripeImages.length ? stripeImages : fallbackImages;
@@ -100,6 +127,7 @@ function productFromStripe(
     description,
     category: product.metadata.category || "Prints",
     colors,
+    colorways: colorways.length === colors.length ? colorways : undefined,
     featured: boolMetadata(product.metadata.featured),
     pickup: boolMetadata(product.metadata.pickup, true),
     ship: boolMetadata(product.metadata.ship, true),
@@ -121,7 +149,11 @@ function productFromStripe(
     designerName: product.metadata.designer_name?.trim() || undefined,
     designerUrl: product.metadata.designer_url?.trim() || undefined,
     sourceModelUrl: product.metadata.source_model_url?.trim() || undefined,
+    requiresCommercialLicense: Boolean(product.metadata.license_provider),
     licenseStatus,
+    previewOnly: product.metadata.preview_only === "true",
+    pricingPending: product.metadata.pricing_pending === "true",
+    previewMessage: product.metadata.preview_message?.trim() || undefined,
     variants,
     demo: isDemo,
   };
@@ -131,7 +163,7 @@ export async function getCatalog(visibility: CatalogVisibility = "public"): Prom
   const stripe = getStripe();
   if (!stripe) {
     return {
-      products: visibility === "office" ? officeDemoProducts : demoProducts,
+      products: withCatalogPreviews(visibility === "office" ? officeDemoProducts : demoProducts, visibility),
       source: "demo",
       checkoutEnabled: false,
     };
@@ -165,12 +197,13 @@ export async function getCatalog(visibility: CatalogVisibility = "public"): Prom
       return { products, source: "stripe", checkoutEnabled: true };
     }
 
-    return products.length
-      ? { products, source: "stripe", checkoutEnabled: true }
-      : { products: demoProducts, source: "demo", checkoutEnabled: false };
+    const productsWithPreviews = withCatalogPreviews(products, visibility);
+    return productsWithPreviews.length
+      ? { products: productsWithPreviews, source: "stripe", checkoutEnabled: true }
+      : { products: withCatalogPreviews(demoProducts, visibility), source: "demo", checkoutEnabled: false };
   } catch {
     return {
-      products: visibility === "office" ? [] : demoProducts,
+      products: withCatalogPreviews(visibility === "office" ? [] : demoProducts, visibility),
       source: "demo",
       checkoutEnabled: false,
     };

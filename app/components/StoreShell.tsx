@@ -15,6 +15,12 @@ import { BrandLogo } from "./BrandLogo";
 
 const STORAGE_KEY = "jakes-3d-print-shop-cart-v2";
 
+function clampCartQuantity(item: CartItem, quantity: number) {
+  const minQuantity = Math.max(1, item.minQuantity ?? 1);
+  const maxQuantity = Math.max(minQuantity, Math.min(10, item.maxQuantity ?? 10));
+  return Math.max(minQuantity, Math.min(maxQuantity, Math.floor(quantity)));
+}
+
 type StoreContextValue = {
   items: CartItem[];
   addItem: (item: CartItem) => void;
@@ -73,21 +79,20 @@ export function StoreShell({
       const match = current.findIndex(
         (existing) => existing.priceId === item.priceId && existing.color === item.color,
       );
-      if (match < 0) return [...current, { ...item, quantity: Math.min(10, item.quantity) }];
+      if (match < 0) return [...current, { ...item, quantity: clampCartQuantity(item, item.quantity) }];
       return current.map((existing, index) =>
         index === match
-          ? { ...existing, quantity: Math.min(10, existing.quantity + item.quantity) }
+          ? { ...existing, quantity: clampCartQuantity(existing, existing.quantity + item.quantity) }
           : existing,
       );
     });
   }, []);
 
   const updateQuantity = useCallback((priceId: string, color: string, quantity: number) => {
-    const safeQuantity = Math.max(1, Math.min(10, Math.floor(quantity)));
     setItems((current) =>
       current.map((item) =>
         item.priceId === priceId && item.color === color
-          ? { ...item, quantity: safeQuantity }
+          ? { ...item, quantity: clampCartQuantity(item, quantity) }
           : item,
       ),
     );
@@ -121,7 +126,7 @@ export function StoreShell({
           <span className="status-dot" aria-hidden="true" />
           {checkoutEnabled
             ? "Stripe sandbox · test cards only · no live charges"
-            : "Test shop · product preview · no live charges"}
+            : "Test shop · no live charges"}
         </div>
       ) : null}
       <header className={`site-header ${isOfficeRoute ? "site-header--office" : ""}`}>
@@ -133,7 +138,7 @@ export function StoreShell({
         ) : (
           <nav aria-label="Primary navigation">
             <Link className={pathname.startsWith("/products") ? "active" : ""} href="/products">Products</Link>
-            <Link className="studio-nav-link" href="/#studio">The studio</Link>
+            <Link className="studio-nav-link" href="/#studio">How it’s made</Link>
             <Link className={pathname === "/cart" ? "active cart-link" : "cart-link"} href="/cart">
               Cart <span aria-label={`${itemCount} items`}>{hydrated ? itemCount : 0}</span>
             </Link>
@@ -146,7 +151,7 @@ export function StoreShell({
           <Link className="brand footer-brand" href="/">
             <BrandLogo />
           </Link>
-          <p>Design-led desk and home objects, made in small batches in Raleigh, NC.</p>
+          <p>Small-batch 3D-printed home and desk goods, made to order in Raleigh, NC.</p>
         </div>
         <div className="footer-links">
           <span>Shop details</span>

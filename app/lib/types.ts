@@ -14,6 +14,14 @@ export type ProductVariant = {
   maxQuantity?: number;
 };
 
+export type ProductColorway = {
+  label: string;
+  baseColor: string;
+  baseHex: string;
+  capColor: string;
+  capHex: string;
+};
+
 export type StoreProduct = {
   id: string;
   slug: string;
@@ -21,6 +29,7 @@ export type StoreProduct = {
   description: string;
   category: string;
   colors: string[];
+  colorways?: ProductColorway[];
   featured: boolean;
   pickup: boolean;
   ship: boolean;
@@ -42,7 +51,11 @@ export type StoreProduct = {
   designerName?: string;
   designerUrl?: string;
   sourceModelUrl?: string;
+  requiresCommercialLicense?: boolean;
   licenseStatus: ProductLicenseStatus;
+  previewOnly?: boolean;
+  pricingPending?: boolean;
+  previewMessage?: string;
   variants: ProductVariant[];
   demo?: boolean;
 };
@@ -59,6 +72,7 @@ export type CartItem = {
   slug: string;
   name: string;
   color: string;
+  colorDetail?: string;
   sizeLabel: string;
   quantity: number;
   unitAmount: number;
@@ -66,4 +80,6 @@ export type CartItem = {
   accent: string;
   pickup: boolean;
   ship: boolean;
+  minQuantity?: number;
+  maxQuantity?: number;
 };

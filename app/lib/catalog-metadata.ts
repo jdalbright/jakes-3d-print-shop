@@ -1,3 +1,5 @@
+import type { ProductColorway } from "./types";
+
 const accentHexes: Record<string, string> = {
   clay: "#23627b",
   ocean: "#557d82",
@@ -29,9 +31,43 @@ const namedColorHexes: Record<string, string> = {
 
 const validHex = /^#[0-9a-f]{6}$/i;
 
+export function parseColorwaysMetadata(value: string | undefined): ProductColorway[] {
+  if (!value) return [];
+
+  return value
+    .split("|")
+    .map((entry) => {
+      const fields = entry.split(";").reduce<Record<string, string>>((result, field) => {
+        const separator = field.indexOf("=");
+        if (separator < 1) return result;
+        const key = field.slice(0, separator).trim();
+        const item = field.slice(separator + 1).trim();
+        if (key && item) result[key] = item;
+        return result;
+      }, {});
+      const label = fields.label;
+      const baseColor = fields.base;
+      const baseHex = fields.base_hex;
+      const capColor = fields.cap;
+      const capHex = fields.cap_hex;
+      if (!label || !baseColor || !capColor || !baseHex || !capHex || !validHex.test(baseHex) || !validHex.test(capHex)) {
+        return null;
+      }
+      return {
+        label,
+        baseColor,
+        baseHex: baseHex.toLowerCase(),
+        capColor,
+        capHex: capHex.toLowerCase(),
+      };
+    })
+    .filter((colorway): colorway is ProductColorway => colorway !== null);
+}
+
 export function splitMetadata(value: string | undefined, fallback: string[]) {
   if (!value) return fallback;
-  const items = value.split(/[|,]/).map((item) => item.trim()).filter(Boolean);
+  const delimiter = value.includes("|") ? "|" : ",";
+  const items = value.split(delimiter).map((item) => item.trim()).filter(Boolean);
   return items.length ? items : fallback;
 }
 
