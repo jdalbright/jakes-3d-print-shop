@@ -10,7 +10,9 @@ type CheckoutItem = { priceId: string; quantity: number; color: string };
 type CheckoutBody = {
   items?: CheckoutItem[];
   fulfillment?: Fulfillment;
+  pickupNote?: string;
   salesChannel?: "office_nfc";
+  checkoutOrigin?: "cart";
 };
 
 const safeIdempotencyKey = /^[a-zA-Z0-9_-]{8,255}$/;
@@ -49,10 +51,22 @@ export async function POST(request: Request) {
   if (body.salesChannel !== undefined && body.salesChannel !== "office_nfc") {
     return NextResponse.json({ error: "Invalid sales channel." }, { status: 400 });
   }
+  if (body.checkoutOrigin !== undefined && body.checkoutOrigin !== "cart") {
+    return NextResponse.json({ error: "Invalid checkout origin." }, { status: 400 });
+  }
 
   const isOfficeCheckout = body.salesChannel === "office_nfc";
   if (isOfficeCheckout && (body.fulfillment !== "pickup" || body.items.length !== 1)) {
     return NextResponse.json({ error: "Office checkout supports one pickup item at a time." }, { status: 400 });
+  }
+  if (body.pickupNote !== undefined && (typeof body.pickupNote !== "string" || body.pickupNote.length > 160)) {
+    return NextResponse.json({ error: "Pickup notes must be 160 characters or fewer." }, { status: 400 });
+  }
+  const pickupNote = typeof body.pickupNote === "string"
+    ? body.pickupNote.replace(/\s+/g, " ").trim()
+    : "";
+  if (pickupNote && (body.fulfillment !== "pickup" || isOfficeCheckout)) {
+    return NextResponse.json({ error: "Pickup notes are available for storefront pickup orders only." }, { status: 400 });
   }
 
   const normalizedItems = body.items.map((item) => ({
@@ -74,6 +88,7 @@ export async function POST(request: Request) {
       fulfillment_method: body.fulfillment,
       sales_channel: isOfficeCheckout ? "office_nfc" : "storefront",
     };
+    if (body.checkoutOrigin === "cart") metadata.checkout_origin = "cart";
     let officeFulfillment: "take_now" | "work_delivery" | null = null;
 
     prices.forEach((price, index) => {
@@ -127,8 +142,11 @@ export async function POST(request: Request) {
     const shippingAmount = STANDARD_US_SHIPPING_CENTS;
     metadata.order_subtotal = String(subtotal);
     metadata.shipping_amount = body.fulfillment === "shipping" ? String(shippingAmount) : "0";
+    if (pickupNote) metadata.pickup_note = pickupNote;
     if (officeFulfillment) metadata.office_fulfillment = officeFulfillment;
-    const cancelPath = isOfficeCheckout ? "/office?checkout=canceled" : "/cart?checkout=canceled";
+    const cancelPath = isOfficeCheckout && body.checkoutOrigin !== "cart"
+      ? "/office?checkout=canceled"
+      : "/cart?checkout=canceled";
     const officeSubmitMessage = officeFulfillment === "take_now"
       ? "After payment, take one physically available keychain from the rack. You do not need to show anyone the confirmation."
       : "Jake will bring your made-to-order item to work when it is ready, usually within 3–5 business days.";
@@ -175,7 +193,11 @@ export async function POST(request: Request) {
               }
             : {
               custom_text: {
-                submit: { message: `${PICKUP_AREA} pickup: Jake will email you after payment to coordinate the private handoff location.` },
+                submit: {
+                  message: pickupNote
+                    ? "Jake will use your pickup note and email after payment to confirm the handoff."
+                    : `${PICKUP_AREA} pickup: Jake will email you after payment to coordinate the private handoff location.`,
+                },
               },
             }),
       },

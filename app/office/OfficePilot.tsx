@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CatalogGrid } from "../components/CatalogGrid";
 import { ProductVisual } from "../components/ProductVisual";
+import { useStore } from "../components/StoreShell";
 import { trackStorefrontEvent } from "../lib/storefront-events";
 import type { ProductVariant, StoreProduct } from "../lib/types";
 
@@ -20,26 +22,21 @@ function variantForQuantity(product: StoreProduct, quantity: number): ProductVar
 type Props = {
   checkoutEnabled: boolean;
   keychain?: StoreProduct;
+  recommendations: StoreProduct[];
 };
 
-export function OfficePilot({ checkoutEnabled, keychain }: Props) {
+export function OfficePilot({ checkoutEnabled, keychain, recommendations }: Props) {
+  const { addItem } = useStore();
   const searchParams = useSearchParams();
   const [keychainQuantity, setKeychainQuantity] = useState(1);
-  const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
   const [error, setError] = useState<{ slug: string; message: string } | null>(null);
 
   useEffect(() => {
     trackStorefrontEvent("office_page_view", { salesChannel: "office_nfc" });
   }, []);
 
-  async function checkout(product: StoreProduct, quantity: number, color: string) {
-    if (!checkoutEnabled) {
-      setError({
-        slug: product.slug,
-        message: "This private preview needs its Stripe test catalog before checkout can open.",
-      });
-      return;
-    }
+  function addKeychainToCart(product: StoreProduct, quantity: number, color: string) {
     const variant = variantForQuantity(product, quantity);
     if (!variant) {
       setError({
@@ -48,48 +45,39 @@ export function OfficePilot({ checkoutEnabled, keychain }: Props) {
       });
       return;
     }
-    setLoadingSlug(product.slug);
     setError(null);
+    addItem({
+      priceId: variant.priceId,
+      productId: product.id,
+      slug: product.slug,
+      name: product.name,
+      color,
+      sizeLabel: variant.sizeLabel,
+      quantity,
+      unitAmount: variant.unitAmount,
+      image: product.image,
+      accent: product.accent,
+      pickup: true,
+      ship: false,
+      minQuantity: variant.minQuantity,
+      maxQuantity: variant.maxQuantity,
+      salesChannel: "office_nfc",
+      officeFulfillment: product.officeFulfillment ?? "take_now",
+    });
     trackStorefrontEvent("office_product_select", {
       productSlug: product.slug,
       variantSku: variant.sku,
       itemCount: quantity,
       salesChannel: "office_nfc",
     });
-    trackStorefrontEvent("checkout_start", {
-      fulfillment: "pickup",
+    trackStorefrontEvent("add_to_cart", {
+      productSlug: product.slug,
+      variantSku: variant.sku,
       itemCount: quantity,
       salesChannel: "office_nfc",
     });
-
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": crypto.randomUUID(),
-        },
-        body: JSON.stringify({
-          items: [{ priceId: variant.priceId, quantity, color }],
-          fulfillment: "pickup",
-          salesChannel: "office_nfc",
-        }),
-      });
-      const result = (await response.json()) as { url?: string; error?: string };
-      if (!response.ok || !result.url) throw new Error(result.error || "Checkout could not start.");
-      trackStorefrontEvent("checkout_redirect", {
-        fulfillment: "pickup",
-        itemCount: quantity,
-        salesChannel: "office_nfc",
-      });
-      window.location.assign(result.url);
-    } catch (checkoutError) {
-      setError({
-        slug: product.slug,
-        message: checkoutError instanceof Error ? checkoutError.message : "Checkout could not start.",
-      });
-      setLoadingSlug(null);
-    }
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 2200);
   }
 
   const keychainBaseVariant = keychain ? variantForQuantity(keychain, 1) : undefined;
@@ -152,6 +140,7 @@ export function OfficePilot({ checkoutEnabled, keychain }: Props) {
                     value={keychainQuantity}
                     onChange={(event) => {
                       setKeychainQuantity(Number(event.target.value));
+                      setAdded(false);
                       setError(null);
                     }}
                   >
@@ -160,29 +149,30 @@ export function OfficePilot({ checkoutEnabled, keychain }: Props) {
                 </label>
                 <button
                   className="primary-button"
-                  disabled={keychainSoldOut || loadingSlug !== null || !keychainVariant}
-                  onClick={() => checkout(keychain, keychainQuantity, keychain.colors[0])}
+                  disabled={keychainSoldOut || !keychainVariant}
+                  onClick={() => addKeychainToCart(keychain, keychainQuantity, keychain.colors[0])}
                   type="button"
                 >
                   {keychainSoldOut
                     ? "Rack sold out"
-                    : loadingSlug === keychain.slug
-                      ? "Opening Stripe…"
+                    : added
+                      ? "Added to cart"
                       : keychainVariant
-                        ? `Pay ${money(keychainVariant.unitAmount * keychainQuantity)} · Take ${keychainQuantity}`
+                        ? `Add ${keychainQuantity} to cart · ${money(keychainVariant.unitAmount * keychainQuantity)}`
                         : "Price unavailable"}
                 </button>
               </div>
+              {added ? <Link className="added-link office-added-link" href="/cart">View cart and checkout</Link> : null}
               {error?.slug === keychain.slug ? (
                 <p className="checkout-error office-inline-error" role="alert" aria-live="polite">{error.message}</p>
               ) : null}
-              <p className="office-fine-print">Honor-system pickup · Choose only from current rack stock · Secure Stripe receipt by email</p>
+              <p className="office-fine-print">Saved while you browse · Rack payment stays separate from made-to-order items · Stripe receipt by email</p>
               <details className="office-rack-details">
                 <summary>How the honor system works</summary>
                 <ol className="office-steps">
                   <li><span>1</span>Make sure a keychain is physically available.</li>
-                  <li><span>2</span>Pay here with Stripe.</li>
-                  <li><span>3</span>Take any one from the rack. No confirmation needs to be shown.</li>
+                  <li><span>2</span>Add it to your cart, then choose anything else you want.</li>
+                  <li><span>3</span>Pay for the rack item at checkout, then take it. No confirmation needs to be shown.</li>
                 </ol>
               </details>
             </div>
@@ -196,6 +186,20 @@ export function OfficePilot({ checkoutEnabled, keychain }: Props) {
           <span>Add the office products to the Stripe test catalog to test the rack payment flow without making a real charge.</span>
         </div>
       ) : null}
+
+      {recommendations.length ? (
+        <section className="office-recommendations" aria-labelledby="office-recommendations-heading">
+          <div className="office-recommendations-heading">
+            <div>
+              <p className="eyebrow">Recommended with your keychain</p>
+              <h2 id="office-recommendations-heading">A couple of useful upgrades.</h2>
+            </div>
+            <p>Order through the full shop. If you work with Jake, choose pickup and add “work pickup” in the optional note—no workplace address needed.</p>
+          </div>
+          <CatalogGrid products={recommendations} showFilters={false} />
+        </section>
+      ) : null}
+
       <div className="office-browse">
         <div>
           <p className="eyebrow">More from the workbench</p>

@@ -76,6 +76,12 @@ export function StoreShell({
 
   const addItem = useCallback((item: CartItem) => {
     setItems((current) => {
+      if (item.salesChannel === "office_nfc") {
+        return [
+          ...current.filter((existing) => existing.salesChannel !== "office_nfc"),
+          { ...item, quantity: clampCartQuantity(item, item.quantity) },
+        ];
+      }
       const match = current.findIndex(
         (existing) => existing.priceId === item.priceId && existing.color === item.color,
       );
@@ -134,7 +140,12 @@ export function StoreShell({
           <BrandLogo variant={isOfficeRoute ? "mark" : "full"} />
         </Link>
         {isOfficeRoute ? (
-          <span className="office-shell-label">Office rack <small>Private pilot</small></span>
+          <div className="office-shell-actions">
+            <span className="office-shell-label">Office rack <small>Private pilot</small></span>
+            <Link className="office-cart-link" href="/cart">
+              Cart <span aria-label={`${itemCount} items`}>{hydrated ? itemCount : 0}</span>
+            </Link>
+          </div>
         ) : (
           <nav aria-label="Primary navigation">
             <Link className={pathname.startsWith("/products") ? "active" : ""} href="/products">Products</Link>

@@ -3,6 +3,10 @@ import { CatalogGrid } from "./components/CatalogGrid";
 import { ProductVisual } from "./components/ProductVisual";
 import { getCatalog } from "./lib/catalog";
 import { storefrontProductStatus } from "./lib/commercial-license";
+import {
+  confirmedBambuPlaMatteColorGroups,
+  confirmedBambuPlaMatteColors,
+} from "./lib/filament-inventory";
 import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "./lib/store-config";
 import type { StoreProduct } from "./lib/types";
 
@@ -10,15 +14,6 @@ const heroProductSlugs = [
   "japandi-tray",
   "sculptural-phone-stand",
   "japandi-mushroom-container",
-];
-
-const selectedMatteColors = [
-  { name: "Charcoal", code: "11101", hex: "#000000" },
-  { name: "Ash Gray", code: "11102", hex: "#9b9ea0" },
-  { name: "Ivory White", code: "11100", hex: "#ffffff" },
-  { name: "Dark Green", code: "11501", hex: "#68724d" },
-  { name: "Dark Blue", code: "11602", hex: "#042f56" },
-  { name: "Mandarin Orange", code: "11300", hex: "#f99963" },
 ];
 
 function money(amount: number) {
@@ -111,23 +106,30 @@ export default async function Home() {
           </ol>
         </div>
 
-        <div className="material-library" aria-labelledby="stocked-colors-heading">
+        <section className="material-library" aria-labelledby="stocked-colors-heading">
           <div className="material-library-heading">
             <div>
               <h3 id="stocked-colors-heading">Stocked matte colors</h3>
-              <p>A sample of the Bambu PLA Matte spools currently on hand. Each product offers only the colors selected for that design.</p>
+              <p>{`All ${confirmedBambuPlaMatteColors.length} Bambu PLA Matte colors currently on hand. Product pages show which colors are offered for each design.`}</p>
             </div>
-            <small>Bambu PLA Matte</small>
+            <small>{`${confirmedBambuPlaMatteColors.length} colors on hand`}</small>
           </div>
-          <ul>
-            {selectedMatteColors.map((color) => (
-              <li key={color.code}>
-                <i style={{ backgroundColor: color.hex }} aria-hidden="true" />
-                <span><strong>Matte {color.name}</strong><small>Bambu / {color.code}</small></span>
-              </li>
+          <div className="material-groups">
+            {confirmedBambuPlaMatteColorGroups.map((group) => (
+              <section className="material-group" aria-labelledby={`color-group-${group.name.toLowerCase().replaceAll(" ", "-")}`} key={group.name}>
+                <h4 id={`color-group-${group.name.toLowerCase().replaceAll(" ", "-")}`}>{group.name}</h4>
+                <ul>
+                  {group.colors.map((color) => (
+                    <li key={color.code}>
+                      <i style={{ backgroundColor: color.hex }} aria-hidden="true" />
+                      <span><strong>{`Matte ${color.name}`}</strong><small>{`Bambu / ${color.code}`}</small></span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
-        </div>
+          </div>
+        </section>
       </section>
 
       <section className="fulfillment-section" aria-labelledby="fulfillment-heading">

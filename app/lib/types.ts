@@ -82,4 +82,6 @@ export type CartItem = {
   ship: boolean;
   minQuantity?: number;
   maxQuantity?: number;
+  salesChannel?: "office_nfc";
+  officeFulfillment?: OfficeFulfillment;
 };

@@ -8,6 +8,31 @@ import {
   commercialPrintPreviewMessage,
   storefrontProductStatus,
 } from "../app/lib/commercial-license.ts";
+import {
+  confirmedBambuPlaMatteColorGroups,
+  confirmedBambuPlaMatteColors,
+} from "../app/lib/filament-inventory.ts";
+
+const expectedConfirmedMattePairs = [
+  "Ivory White|11100",
+  "Lemon Yellow|11400",
+  "Mandarin Orange|11300",
+  "Sakura Pink|11201",
+  "Lilac Purple|11700",
+  "Apple Green|11502",
+  "Grass Green|11500",
+  "Dark Green|11501",
+  "Sky Blue|11603",
+  "Marine Blue|11600",
+  "Dark Blue|11602",
+  "Desert Tan|11401",
+  "Latte Brown|11800",
+  "Caramel|11803",
+  "Terracotta|11203",
+  "Dark Brown|11801",
+  "Ash Gray|11102",
+  "Charcoal|11101",
+];
 
 async function render(pathname = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -45,7 +70,23 @@ test("server-renders a focused homepage with a varied collection and clear order
   assert.match(html, /More from the shop/);
   assert.match(html, /How each order is made/);
   assert.match(html, /Stocked matte colors/);
-  assert.match(html, /Matte Charcoal/);
+  assert.match(html, /18 colors on hand/);
+  assert.equal(confirmedBambuPlaMatteColors.length, 18);
+  assert.deepEqual(
+    confirmedBambuPlaMatteColorGroups.map((group) => group.name),
+    ["Neutrals", "Warm tones", "Soft tones", "Greens", "Blues", "Browns"],
+  );
+  assert.ok(confirmedBambuPlaMatteColorGroups.every((group) => group.colors.length === 3));
+  assert.equal(new Set(confirmedBambuPlaMatteColors.map((color) => color.name)).size, 18);
+  assert.equal(new Set(confirmedBambuPlaMatteColors.map((color) => color.code)).size, 18);
+  assert.deepEqual(
+    confirmedBambuPlaMatteColors.map(({ name, code }) => `${name}|${code}`).toSorted(),
+    expectedConfirmedMattePairs.toSorted(),
+  );
+  for (const color of confirmedBambuPlaMatteColors) {
+    assert.match(html, new RegExp(`Matte ${color.name}`));
+    assert.match(html, new RegExp(`Bambu / ${color.code}`));
+  }
   assert.match(html, /Pickup in Raleigh or ship across the U\.S\./);
   assert.match(html, /Stripe securely handles card payment/);
   assert.match(html, /\$12\.00/);
@@ -133,6 +174,14 @@ test("office keychain pilot stays unlisted and isolated from the public made-to-
   assert.match(officeHtml, /One for [\s\S]{0,24}\$5\.00/);
   assert.match(officeHtml, /Taking two or more/);
   assert.match(officeHtml, /\$4\.00/);
+  assert.match(officeHtml, /Add 1 to cart/);
+  assert.match(officeHtml, /Recommended with your keychain/);
+  assert.match(officeHtml, /choose pickup and add “work pickup”/);
+  assert.match(officeHtml, /Sculptural Phone Stand/);
+  assert.match(officeHtml, /href="\/products\/sculptural-phone-stand"/);
+  assert.match(officeHtml, /Japandi Tray/);
+  assert.match(officeHtml, /href="\/products\/japandi-tray"/);
+  assert.doesNotMatch(officeHtml, /Acorn Container|Japandi Mushroom Container|Juno Display Tray/);
   assert.match(officeHtml, /Browse the full shop/);
   assert.match(officeHtml, /noindex/);
   assert.doesNotMatch(officeHtml, /Japandi Paper Towel Holder/);
@@ -144,6 +193,11 @@ test("office keychain pilot stays unlisted and isolated from the public made-to-
   assert.match(officePage, /robots: \{ index: false, follow: false \}/);
   assert.match(officeClient, /length: 10/);
   assert.match(officeClient, /salesChannel: "office_nfc"/);
+  assert.match(officeClient, /addKeychainToCart/);
+  assert.match(officeClient, /addItem\(\{/);
+  assert.match(officeClient, /View cart and checkout/);
+  assert.match(officeClient, /trackStorefrontEvent\("add_to_cart"/);
+  assert.doesNotMatch(officeClient, /fetch\("\/api\/checkout"/);
   assert.match(officeClient, /No confirmation needs to be shown/);
   assert.match(officeClient, /How the honor system works/);
   assert.match(officeClient, /error\?\.slug === keychain\.slug/);
@@ -379,10 +433,17 @@ test("checkout keeps prices authoritative and secrets server-only", async () => 
   assert.doesNotMatch(checkout, /subtotal >= 5000/);
   assert.match(checkout, /allowed_countries: \["US"/);
   assert.match(checkout, /fulfillment_method/);
+  assert.match(checkout, /pickupNote\.length > 160/);
+  assert.match(checkout, /metadata\.pickup_note = pickupNote/);
+  assert.match(checkout, /body\.fulfillment !== "pickup" \|\| isOfficeCheckout/);
+  assert.match(checkout, /Jake will use your pickup note/);
   assert.match(checkout, /parseColorwaysMetadata\(product\.metadata\.colorways\)/);
   assert.match(checkout, /selectedColorway/);
   assert.match(checkout, /Base: \$\{selectedColorway\.baseColor\}; Cap: \$\{selectedColorway\.capColor\}/);
   assert.match(cart, /availableItems\.map\(\(\{ priceId, quantity, color \}\)/);
+  assert.match(cart, /maxLength=\{160\}/);
+  assert.match(cart, /work pickup/);
+  assert.match(cart, /pickupNote: pickupNote\.trim\(\)/);
   assert.match(checkout, /const hasActiveLicense = licenseStatus === "active" \|\| licenseStatus === "not_required"/);
   assert.doesNotMatch(shell, /STRIPE_SECRET_KEY/);
   assert.match(stripe, /process\.env\.STRIPE_SECRET_KEY/);
@@ -475,11 +536,14 @@ test("catalog seeding is test-mode only and idempotent", async () => {
 });
 
 test("office checkout remains keychain-only while public commercial previews are server-gated", async () => {
-  const [checkout, success, catalog, commercialLicense] = await Promise.all([
+  const [checkout, success, catalog, commercialLicense, cart, shell, cleanup] = await Promise.all([
     readFile(new URL("../app/api/checkout/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/order/success/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/catalog.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/commercial-license.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/cart/CartPage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/StoreShell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/order/success/PurchasedCartCleanup.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(checkout, /salesChannel\?: "office_nfc"/);
   assert.match(checkout, /body\.items\.length !== 1/);
@@ -491,11 +555,26 @@ test("office checkout remains keychain-only while public commercial previews are
   assert.match(checkout, /office_fulfillment/);
   assert.match(checkout, /commercialMetadataOrderReady\(product\.metadata\)/);
   assert.match(checkout, /preview_only/);
-  assert.match(checkout, /cancelPath = isOfficeCheckout \? "\/office\?checkout=canceled"/);
+  assert.match(checkout, /checkoutOrigin\?: "cart"/);
+  assert.match(checkout, /body\.checkoutOrigin !== "cart"/);
+  assert.match(checkout, /metadata\.checkout_origin = "cart"/);
+  assert.match(checkout, /isOfficeCheckout && body\.checkoutOrigin !== "cart"/);
   assert.match(checkout, /isOfficeCheckout\s*\? \{\}\s*:\s*\{\s*phone_number_collection/);
   assert.match(checkout, /shipping_amount = body\.fulfillment === "shipping" \? String\(shippingAmount\) : "0"/);
   assert.match(success, /Payment confirmed—take one available keychain/);
   assert.match(success, /deliver your made-to-order item at work/);
+  assert.match(success, /pickupNoteReceived/);
+  assert.match(success, /Jake received your pickup note/);
+  assert.match(success, /Continue with the rest of your cart/);
+  assert.match(success, /PurchasedCartCleanup/);
+  assert.match(cleanup, /removeItem\(item\.priceId, item\.color\)/);
+  assert.match(cart, /item\.salesChannel === "office_nfc"/);
+  assert.match(cart, /Checkout keychain separately/);
+  assert.match(cart, /Checkout other items/);
+  assert.match(cart, /salesChannel: "office_nfc"/);
+  assert.match(cart, /availableItems\.map\(\(\{ priceId, quantity, color \}\)/);
+  assert.match(shell, /existing\.salesChannel !== "office_nfc"/);
+  assert.match(shell, /office-cart-link/);
   assert.match(catalog, /getCatalog\(visibility: CatalogVisibility = "public"\)/);
   assert.match(catalog, /visibility === "office" \? officeDemoProducts : demoProducts/);
   assert.doesNotMatch(commercialLicense, /authorized_seller_badge/);

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type Stripe from "stripe";
 import { getStripe } from "../../lib/stripe";
 import { PICKUP_AREA } from "../../lib/store-config";
+import { PurchasedCartCleanup } from "./PurchasedCartCleanup";
 
 export const metadata: Metadata = { title: "Order confirmation", robots: { index: false, follow: false } };
 
@@ -50,6 +51,13 @@ export default async function SuccessPage({ searchParams }: Props) {
   const pickup = session.metadata?.fulfillment_method === "pickup";
   const officeCheckout = session.metadata?.sales_channel === "office_nfc";
   const officeFulfillment = session.metadata?.office_fulfillment;
+  const pickupNoteReceived = Boolean(session.metadata?.pickup_note);
+  const checkoutFromCart = session.metadata?.checkout_origin === "cart";
+  const purchasedCartItems = Object.entries(session.metadata ?? {}).flatMap(([key, value]) => {
+    if (!/^item_\d+$/.test(key)) return [];
+    const [priceId, , color] = value.split("|");
+    return priceId?.startsWith("price_") && color ? [{ priceId, color }] : [];
+  });
 
   if (!paid) {
     return (
@@ -57,7 +65,7 @@ export default async function SuccessPage({ searchParams }: Props) {
         <p className="eyebrow">Payment pending</p>
         <h1>Your payment isn’t confirmed yet.</h1>
         <p>Stripe is still processing this payment. Check your email before trying again.</p>
-        <Link className="primary-button" href={officeCheckout ? "/office" : "/cart"}>{officeCheckout ? "Return to office page" : "Return to cart"}</Link>
+        <Link className="primary-button" href={checkoutFromCart || !officeCheckout ? "/cart" : "/office"}>{checkoutFromCart || !officeCheckout ? "Return to cart" : "Return to office page"}</Link>
       </section>
     );
   }
@@ -74,11 +82,14 @@ export default async function SuccessPage({ searchParams }: Props) {
       ? "Payment confirmed—take one available keychain from the rack. You do not need to show anyone this screen."
       : "Jake will deliver your made-to-order item at work when it is ready."
     : pickup
-      ? `Jake will email you to coordinate a private pickup handoff in ${PICKUP_AREA}.`
+      ? pickupNoteReceived
+        ? "Jake received your pickup note and will email you to confirm the handoff."
+        : `Jake will email you to coordinate a private pickup handoff in ${PICKUP_AREA}.`
       : "You’ll receive a receipt now and an update when your prints are ready to ship.";
 
   return (
     <section className="confirmation-page">
+      <PurchasedCartCleanup items={purchasedCartItems} />
       <p className="confirmation-status">Payment / confirmed</p>
       <h1>Order confirmed.</h1>
       <p className="confirmation-deck">
@@ -93,7 +104,7 @@ export default async function SuccessPage({ searchParams }: Props) {
         <span>Next</span>
         <p>{nextMessage}</p>
       </div>
-      <Link className="text-link" href={officeCheckout ? "/office" : "/"}>{officeCheckout ? "Back to the office page" : "Keep browsing"} <span aria-hidden="true">↗</span></Link>
+      <Link className="text-link" href={checkoutFromCart ? "/cart" : officeCheckout ? "/office" : "/"}>{checkoutFromCart ? "Continue with the rest of your cart" : officeCheckout ? "Back to the office page" : "Keep browsing"} <span aria-hidden="true">↗</span></Link>
     </section>
   );
 }

@@ -20,13 +20,21 @@ export const metadata: Metadata = {
 };
 
 export default async function OfficePage() {
-  const { products, checkoutEnabled } = await getCatalog("office");
-  const keychain = products.find((product) => product.slug === "office-keychain-rack");
+  const [officeCatalog, publicCatalog] = await Promise.all([
+    getCatalog("office"),
+    getCatalog("public"),
+  ]);
+  const keychain = officeCatalog.products.find((product) => product.slug === "office-keychain-rack");
+  const recommendations = ["sculptural-phone-stand", "japandi-tray"].flatMap((slug) => {
+    const product = publicCatalog.products.find((item) => item.slug === slug);
+    return product ? [product] : [];
+  });
 
   return (
     <OfficePilot
-      checkoutEnabled={checkoutEnabled}
+      checkoutEnabled={officeCatalog.checkoutEnabled}
       keychain={keychain}
+      recommendations={recommendations}
     />
   );
 }
