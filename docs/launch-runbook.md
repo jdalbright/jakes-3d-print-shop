@@ -49,7 +49,11 @@ pre-public real-payment test is mandatory.
    `npm run stripe:live:sync -- --confirm-live-catalog=UPDATE_LIVE_STRIPE_CATALOG`.
 4. Create the live webhook endpoint at `/api/stripe/webhook` for
    `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
-   and `checkout.session.async_payment_failed`.
+   and `checkout.session.async_payment_failed`. Pin it to Stripe API version
+   `2026-02-25.clover`, matching `stripeApiVersion` in `app/lib/stripe.ts`; do
+   not inherit the account default. An endpoint created with another version
+   must be replaced rather than edited in place. Keep the old endpoint enabled
+   until the replacement has returned 2xx for a signed delivery.
 5. Store the live key and webhook signing secret in Sites. Set
    `STRIPE_AUTOMATIC_TAX=true` only after the registration is active, then set
    `STORE_LIVE_MODE=true`.
@@ -66,7 +70,7 @@ or chat. Keep them in Stripe, ignored local environment files, and Sites secrets
 - After the approved public cutover, buy the lowest-priced public product using
   pickup immediately.
 - Confirm the Stripe receipt, order-success page, verified webhook delivery,
-  redacted application logs, and order metadata.
+  endpoint API version, redacted application logs, and order metadata.
 - Refund the payment to the original method and confirm the refund receipt.
 - Check shipping and pickup Checkout sessions in test mode, including tax,
   cancellation, invalid cart changes, and async payment events.

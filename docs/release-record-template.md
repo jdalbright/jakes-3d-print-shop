@@ -51,7 +51,8 @@ Record values only for non-secret settings. For secret settings, record
 - Expected/active office Product and Price counts:
 - North Carolina Tax registration status:
 - Physical-goods tax code and tax behavior:
-- Webhook endpoint status and required events:
+- Webhook endpoint status, pinned API version, and required events:
+- Successful signed webhook delivery timestamp and 2xx result:
 - Restricted purchase PaymentIntent reference (last 8 characters only), receipt
   result, and success-page result (no customer data):
 - Refund reference (last 8 characters only) and result:

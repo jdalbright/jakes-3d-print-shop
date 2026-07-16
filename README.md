@@ -45,6 +45,11 @@ The shop accepts signed Stripe events at `/api/stripe/webhook`. Configure the en
 - `checkout.session.async_payment_succeeded`
 - `checkout.session.async_payment_failed`
 
+Pin the webhook endpoint to Stripe API version `2026-02-25.clover`, matching
+`stripeApiVersion` in `app/lib/stripe.ts`; do not leave it on the account
+default. If an endpoint was created without that version, create a replacement
+and verify a signed 2xx delivery before disabling the old endpoint.
+
 Copy the endpoint signing secret into `STRIPE_WEBHOOK_SECRET`. Use the Stripe CLI signing secret for local forwarding and the Dashboard endpoint signing secret for the hosted site; they are different secrets.
 
 The webhook records payment state without logging customer names, email addresses, phone numbers, or shipping addresses. Fulfillment remains managed manually in Stripe Dashboard for v1.
