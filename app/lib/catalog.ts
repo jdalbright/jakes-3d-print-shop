@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 import { buildColorHexes, normalizeProductImages, parseColorwaysMetadata, splitMetadata, textMetadata } from "./catalog-metadata";
 import { catalogPreviewProducts } from "./catalog-preview-products";
 import { checkLiveCatalogReadiness } from "./catalog-readiness";
+import { hasActiveNorthCarolinaRegistration } from "./live-health";
 import { demoProducts, officeDemoProducts } from "./demo-catalog";
 import {
   sabreDesignAcornContainerImages,
@@ -177,9 +178,15 @@ const loadCatalog = cache(async (visibility: CatalogVisibility): Promise<Catalog
   }
 
   try {
-    const [productsResult, pricesResult] = await Promise.all([
-      stripe.products.list({ active: true, limit: 100 }),
-      stripe.prices.list({ active: true, limit: 100 }),
+    const [productsResult, pricesResult, registrationsResult] = await Promise.all([
+      stripe.products.list({ active: true, limit: 100 }, { maxNetworkRetries: 0, timeout: 5_000 }),
+      stripe.prices.list({ active: true, limit: 100 }, { maxNetworkRetries: 0, timeout: 5_000 }),
+      stripeConfiguration.liveLaunchEnabled
+        ? stripe.tax.registrations.list(
+            { status: "active", limit: 100 },
+            { maxNetworkRetries: 0, timeout: 5_000 },
+          )
+        : Promise.resolve(null),
     ]);
 
     const visibleProducts = productsResult.data.filter(
@@ -207,8 +214,14 @@ const loadCatalog = cache(async (visibility: CatalogVisibility): Promise<Catalog
         productsTruncated: productsResult.has_more,
         pricesTruncated: pricesResult.has_more,
       });
-      if (!readiness.ready) {
-        console.error("live_catalog_unavailable", { reason: "catalog_incomplete", issues: readiness.issues });
+      const taxRegistrationReady = registrationsResult !== null
+        && !registrationsResult.has_more
+        && hasActiveNorthCarolinaRegistration(registrationsResult.data);
+      if (!readiness.ready || !taxRegistrationReady) {
+        console.error("live_catalog_unavailable", {
+          reason: readiness.ready ? "tax_registration" : "catalog_incomplete",
+          ...(readiness.ready ? {} : { issues: readiness.issues }),
+        });
         return { products: [], source: "stripe", checkoutEnabled: false };
       }
       return { products, source: "stripe", checkoutEnabled: true };

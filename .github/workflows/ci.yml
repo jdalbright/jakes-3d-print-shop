@@ -23,6 +23,8 @@ jobs:
         with:
           node-version: 22.13.0
           cache: npm
+      - name: Scan tracked files for secrets
+        run: npm run security:secrets
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck

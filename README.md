@@ -89,6 +89,12 @@ The site records privacy-conscious `product_view`, `add_to_cart`, `checkout_star
 ```bash
 npm run lint
 npm run typecheck
+npm run security:secrets
 npm test
 npm audit --audit-level=high
 ```
+
+The secret scan uses only Node.js and Git, examines tracked text files, skips
+binary assets, and never prints matched values. Ignored local environment files
+are outside its input by design. CI runs the same command on every pull request
+and push to `main`.

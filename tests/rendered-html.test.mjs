@@ -498,11 +498,12 @@ test("motion feedback remains accessible, restrained, and reduced-motion safe", 
 });
 
 test("checkout keeps prices authoritative and secrets server-only", async () => {
-  const [checkout, stripe, shell, cart] = await Promise.all([
+  const [checkout, stripe, shell, cart, catalog] = await Promise.all([
     readFile(new URL("../app/api/checkout/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/stripe.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/components/StoreShell.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/cart/CartPage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/catalog.ts", import.meta.url), "utf8"),
   ]);
   assert.match(checkout, /stripe\.prices\.retrieve/);
   assert.match(checkout, /price\.currency !== "usd"/);
@@ -517,10 +518,11 @@ test("checkout keeps prices authoritative and secrets server-only", async () => 
   assert.match(checkout, /body\.fulfillment !== "pickup" \|\| isOfficeCheckout/);
   assert.match(checkout, /Jake will use your pickup note/);
   assert.match(checkout, /parseColorwaysMetadata\(product\.metadata\.colorways\)/);
-  assert.match(checkout, /checkLiveCatalogReadiness/);
-  assert.match(checkout, /productsTruncated: productsResult\.has_more/);
-  assert.match(checkout, /pricesTruncated: pricesResult\.has_more/);
-  assert.match(checkout, /checkout_catalog_unavailable/);
+  assert.match(checkout, /getCachedLiveStripeHealth/);
+  assert.match(checkout, /!readiness\.taxRegistration/);
+  assert.match(checkout, /checkout_live_dependencies_unavailable/);
+  assert.match(catalog, /hasActiveNorthCarolinaRegistration/);
+  assert.match(catalog, /tax_registration/);
   assert.match(checkout, /getValidatedSiteOrigin\(true\)/);
   assert.match(checkout, /selectedColorway/);
   assert.match(checkout, /Base: \$\{selectedColorway\.baseColor\}; Cap: \$\{selectedColorway\.capColor\}/);

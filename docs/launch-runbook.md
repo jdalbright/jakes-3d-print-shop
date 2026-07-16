@@ -14,7 +14,27 @@ below is complete. The public URL is
 - Keep the SabreDesign commercial membership active and retain the supporting
   evidence.
 - Run `npm run verify` and `npm audit --audit-level=high` from a clean checkout.
+  `verify` includes the deterministic tracked-file secret scan used by CI.
 - Confirm `/api/health` reports ready in the restricted deployment.
+- Copy [`release-record-template.md`](release-record-template.md) to a dated
+  release record and attach evidence as each remaining gate is completed.
+
+### Sites access and Stripe webhooks
+
+Sites applies its `custom` access gate before the Worker receives a request.
+Stripe cannot add the `OAI-Sites-Authorization` owner-bypass header, so a Stripe
+webhook sent to the final domain is rejected while access remains restricted.
+Do not count a restricted final-domain webhook test as completed unless Sites
+adds a verified path-level exception or a separate public webhook ingress is in
+place.
+
+The default cutover is therefore a short, owner-approved public validation
+window: finish every other gate while restricted, verify fail-closed health with
+the owner bypass, switch access to public, immediately complete the controlled
+purchase/webhook/receipt/refund test, and remain public only if it passes. Keep
+the restricted-access rollback and `STORE_LIVE_MODE=false` action ready before
+opening that window. A separate public webhook proxy is the alternative when a
+pre-public real-payment test is mandatory.
 
 ## Catalog and payment activation
 
@@ -39,24 +59,36 @@ below is complete. The public URL is
 Never paste live keys into source, commits, commands recorded in documentation,
 or chat. Keep them in Stripe, ignored local environment files, and Sites secrets.
 
-## Restricted live check
+## Final live check
 
-- Buy the lowest-priced public product using pickup.
+- While restricted, verify live catalog and tax readiness through the owner
+  bypass, but do not expect Stripe to reach the final-domain webhook.
+- After the approved public cutover, buy the lowest-priced public product using
+  pickup immediately.
 - Confirm the Stripe receipt, order-success page, verified webhook delivery,
   redacted application logs, and order metadata.
 - Refund the payment to the original method and confirm the refund receipt.
 - Check shipping and pickup Checkout sessions in test mode, including tax,
   cancellation, invalid cart changes, and async payment events.
 
-After those checks pass, change Sites access from the current allowlist to
-public and repeat an anonymous home, product, cart, policy, robots, sitemap,
-health, and Checkout smoke test.
+Repeat an anonymous home, product, cart, policy, robots, sitemap, health, and
+Checkout smoke test during that same validation window. If any check fails,
+return Sites to the restricted allowlist immediately and disable live mode.
 
 ## Monitoring and rollback
 
 Watch 5xx responses, Checkout 409/429/503 rates, catalog-unavailable logs,
 webhook delivery failures, and Stripe payment/refund activity during the first
 day.
+
+After the public smoke test passes, set the GitHub Actions repository variable
+`PUBLIC_MONITOR_ENABLED=true` and manually run the **Production Monitor**
+workflow once. It then checks live readiness, security headers, `robots.txt`,
+and the sitemap every 15 minutes. Confirm GitHub Actions failure notifications
+reach the launch owner. This is a baseline availability alert; Stripe Dashboard
+webhook-failure notifications and Sites 5xx/log alerts must also be enabled and
+test-fired because the public monitor does not inspect private payment data or
+create Checkout Sessions.
 
 If payment correctness, tax, catalog integrity, or security fails:
 

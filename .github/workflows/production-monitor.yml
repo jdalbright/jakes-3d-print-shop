@@ -1,0 +1,28 @@
+name: Production Monitor
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-monitor
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || vars.PUBLIC_MONITOR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+      - name: Verify public storefront health
+        run: node scripts/check-production-health.mjs
+        env:
+          SITE_URL: https://jakes-3d-print-shop.jakealbright.chatgpt.site

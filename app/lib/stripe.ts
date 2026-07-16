@@ -57,7 +57,13 @@ export function getStripeRuntimeConfiguration(): StripeRuntimeConfiguration {
   const keyMode = stripeKeyMode();
   const liveModeRequested = process.env.STORE_LIVE_MODE === "true";
   const webhookConfigured = hasValidStripeWebhookSecret();
-  const liveLaunchEnabled = liveModeRequested && keyMode === "live" && webhookConfigured;
+  const automaticTaxConfigured = process.env.STRIPE_AUTOMATIC_TAX === "true";
+  const siteUrlConfigured = getValidatedSiteOrigin(true) !== null;
+  const liveLaunchEnabled = liveModeRequested
+    && keyMode === "live"
+    && webhookConfigured
+    && automaticTaxConfigured
+    && siteUrlConfigured;
   const stripeEnabled = liveLaunchEnabled || (!liveModeRequested && keyMode === "test");
 
   return {

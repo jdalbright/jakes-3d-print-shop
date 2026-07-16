@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { parseColorwaysMetadata } from "../../lib/catalog-metadata";
-import { checkLiveCatalogReadiness } from "../../lib/catalog-readiness";
 import { commercialMetadataOrderReady } from "../../lib/commercial-license";
+import { getCachedLiveStripeHealth } from "../../lib/live-health";
 import {
   checkRateLimit,
   hasOnlyKeys,
@@ -213,18 +213,13 @@ export async function POST(request: Request) {
 
   try {
     if (isLiveLaunchEnabled()) {
-      const [productsResult, pricesResult] = await Promise.all([
-        stripe.products.list({ active: true, limit: 100 }),
-        stripe.prices.list({ active: true, limit: 100 }),
-      ]);
-      const readiness = checkLiveCatalogReadiness({
-        products: productsResult.data,
-        prices: pricesResult.data,
-        productsTruncated: productsResult.has_more,
-        pricesTruncated: pricesResult.has_more,
-      });
-      if (!readiness.ready) {
-        console.error("checkout_catalog_unavailable", { issues: readiness.issues });
+      const readiness = await getCachedLiveStripeHealth(stripe);
+      if (!readiness.stripeReachable || !readiness.catalog || !readiness.taxRegistration) {
+        console.error("checkout_live_dependencies_unavailable", {
+          stripe: readiness.stripeReachable,
+          catalog: readiness.catalog,
+          taxRegistration: readiness.taxRegistration,
+        });
         return checkoutJson("Checkout is temporarily unavailable.", 503);
       }
     }
