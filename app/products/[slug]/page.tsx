@@ -26,18 +26,21 @@ function relatedProducts(current: StoreProduct, products: StoreProduct[]) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const { product } = await getCatalogProduct(slug);
-  if (!product) return { title: "Print not found" };
+  if (!product) return { title: "Print not found", robots: { index: false, follow: false } };
   const socialImage = product.images[0] || product.image;
   const previewOnly = !commercialPrintOrderReady(product);
+  const canonical = `/products/${product.slug}`;
 
   return {
     title: product.name,
     description: product.description,
+    alternates: { canonical },
     robots: product.demo || product.licenseStatus !== "active" || previewOnly ? { index: false, follow: false } : undefined,
     openGraph: {
       title: product.name,
       description: product.description,
       type: "website",
+      url: canonical,
       images: socialImage ? [{ url: socialImage, alt: product.name }] : undefined,
     },
     twitter: {

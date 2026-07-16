@@ -64,7 +64,7 @@ test("server-renders a focused homepage with a varied collection and clear order
   );
   assert.equal(heroProductPaths.size, 3);
   const homepageProductPaths = new Set(
-    [...html.matchAll(/href="(\/products\/[^"#?]+)"/g)].map((match) => match[1]),
+    [...html.matchAll(/href="(\/products\/[^\/"#?]+)"/g)].map((match) => match[1]),
   );
   assert.equal(homepageProductPaths.size, 6);
   assert.match(html, /More from the shop/);
@@ -142,10 +142,13 @@ test("server-renders the public SabreDesign collection with priced, orderable pr
   assert.match(html, /\$24\.00/);
   assert.doesNotMatch(html, /Preview only/);
   assert.doesNotMatch(html, /Pricing in final testing/);
-  assert.match(html, /USf35f084eff6688\/design\/2025-08-15_55711c8d6c09c8\.png/);
-  assert.match(html, /USa5c6c988f07bf3\/design\/2025-09-23_9db44544733358\.png/);
-  assert.match(html, /USed922762b5dc30\/design\/34f8fd3120ed287d\.png/);
-  assert.match(html, /USedc5387b4b8b54\/design\/2024-10-20_5e4b3349950a8\.png/);
+  assert.match(html, /\/products\/sabredesign\/japandi-paper-towel-holder-01\.webp/);
+  assert.match(html, /\/products\/sabredesign\/japandi-tray-01\.webp/);
+  assert.match(html, /\/products\/sabredesign\/acorn-container-01\.webp/);
+  assert.match(html, /\/products\/sabredesign\/japandi-mushroom-container-01\.webp/);
+  assert.match(html, /\/products\/sabredesign\/juno-display-tray-01\.webp/);
+  assert.match(html, /\/products\/sabredesign\/sculptural-phone-stand-01\.webp/);
+  assert.doesNotMatch(html, /makerworld\.bblmw\.com/);
   assert.doesNotMatch(html, /Keychain from the Rack/);
   assert.doesNotMatch(html, /Onami 2 Headphone Stand|Meyui/);
   assert.doesNotMatch(html, /Desk Command Center|Tray &amp; Pencil Cup|Ribbed Desk Organizer|Gear Phone Stand|Everyday Desk Valet|Dragon Skin Pencil Holder/);
@@ -174,7 +177,7 @@ test("office keychain pilot stays unlisted and isolated from the public made-to-
   assert.match(officeHtml, /One for [\s\S]{0,24}\$5\.00/);
   assert.match(officeHtml, /Taking two or more/);
   assert.match(officeHtml, /\$4\.00/);
-  assert.match(officeHtml, /Add 1 to cart/);
+  assert.match(officeHtml, /Ordering unavailable/);
   assert.match(officeHtml, /Recommended with your keychain/);
   assert.match(officeHtml, /choose pickup and add “work pickup”/);
   assert.match(officeHtml, /Sculptural Phone Stand/);
@@ -195,6 +198,7 @@ test("office keychain pilot stays unlisted and isolated from the public made-to-
   assert.match(officeClient, /salesChannel: "office_nfc"/);
   assert.match(officeClient, /addKeychainToCart/);
   assert.match(officeClient, /addItem\(\{/);
+  assert.match(officeClient, /Add \$\{keychainQuantity\} to cart/);
   assert.match(officeClient, /View cart and checkout/);
   assert.match(officeClient, /trackStorefrontEvent\("add_to_cart"/);
   assert.doesNotMatch(officeClient, /fetch\("\/api\/checkout"/);
@@ -203,6 +207,7 @@ test("office keychain pilot stays unlisted and isolated from the public made-to-
   assert.match(officeClient, /error\?\.slug === keychain\.slug/);
   assert.match(officeClient, /variantForQuantity/);
   assert.match(officeClient, /keychainVariant\.unitAmount \* keychainQuantity/);
+  assert.doesNotMatch(officeClient, /Stripe test|test catalog|refreshed for the first launch|Catalog setup/);
 });
 
 test("server-renders all current SabreDesign products as orderable while retiring removed routes", async () => {
@@ -241,7 +246,7 @@ test("server-renders all current SabreDesign products as orderable while retirin
   assert.match(paperHolderHtml, /Matte Ivory White \(11100\)/);
   assert.match(paperHolderHtml, /Matte Dark Brown \(11801\)/);
   assert.match(paperHolderHtml, /Bambu PLA Matte/);
-  assert.match(paperHolderHtml, /US146adb5b110ef3\/design\/2025-05-26_db990bd39a9d68\.jpg/);
+  assert.match(paperHolderHtml, /\/products\/sabredesign\/japandi-paper-towel-holder-01\.webp/);
   assert.match(paperHolderHtml, /Small batch/);
   assert.match(paperHolderHtml, /Add to cart/);
   assert.match(paperHolderHtml, /Printed to order in 3–5 business days/);
@@ -253,7 +258,7 @@ test("server-renders all current SabreDesign products as orderable while retirin
   assert.match(trayHtml, /Add to cart/);
   assert.match(trayHtml, /197 × 123 × 16 mm/);
   assert.match(trayHtml, /1 plate · 2\.1 hours/);
-  assert.match(trayHtml, /USb800abee08578\/design\/5f0b2aecabdde816\.png/);
+  assert.match(trayHtml, /\/products\/sabredesign\/japandi-tray-01\.webp/);
   for (const productHtml of [acornHtml, mushroomHtml, junoHtml, phoneStandHtml]) {
     assert.match(productHtml, /SabreDesign/);
     assert.match(productHtml, /Small batch/);
@@ -272,7 +277,7 @@ test("server-renders all current SabreDesign products as orderable while retirin
   assert.match(acornHtml, /Cap: Matte Dark Brown \(11801\)/);
   assert.match(acornHtml, /Base: Matte Terracotta \(11203\)/);
   assert.match(acornHtml, /Cap: Matte Charcoal \(11101\)/);
-  assert.match(acornHtml, /USf35f084eff6688\/design\/2025-08-15_55711c8d6c09c8\.png/);
+  assert.match(acornHtml, /\/products\/sabredesign\/acorn-container-01\.webp/);
   assert.match(mushroomHtml, /73 mm tall × 70 mm wide/);
   assert.match(mushroomHtml, /\$20\.00/);
   assert.match(mushroomHtml, /Sandstone/);
@@ -281,16 +286,16 @@ test("server-renders all current SabreDesign products as orderable while retirin
   assert.match(mushroomHtml, /Graphite/);
   assert.match(mushroomHtml, /Base: Matte Ash Gray \(11102\)/);
   assert.match(mushroomHtml, /Cap: Matte Sakura Pink \(11201\)/);
-  assert.match(mushroomHtml, /USa5c6c988f07bf3\/design\/2025-09-23_9db44544733358\.png/);
+  assert.match(mushroomHtml, /\/products\/sabredesign\/japandi-mushroom-container-01\.webp/);
   assert.match(junoHtml, /Solid · 236 mm/);
   assert.match(junoHtml, /\$42\.00/);
-  assert.match(junoHtml, /USed922762b5dc30\/design\/34f8fd3120ed287d\.png/);
+  assert.match(junoHtml, /\/products\/sabredesign\/juno-display-tray-01\.webp/);
   assert.match(phoneStandHtml, /MakerWorld does not publish a dimensional spec/);
   assert.match(phoneStandHtml, /Matte Dark Blue \(11602\)/);
   assert.match(phoneStandHtml, /Matte Sakura Pink \(11201\)/);
   assert.match(phoneStandHtml, /Matte Apple Green \(11502\)/);
   assert.match(phoneStandHtml, /\$24\.00/);
-  assert.match(phoneStandHtml, /USedc5387b4b8b54\/design\/2024-10-20_5e4b3349950a8\.png/);
+  assert.match(phoneStandHtml, /\/products\/sabredesign\/sculptural-phone-stand-01\.webp/);
   assert.match(await policy.text(), /Shipping &amp; pickup/);
 });
 
@@ -418,6 +423,50 @@ test("product UI includes accessible gallery and aligned purchase controls", asy
   assert.match(configurator, /pricingInFinalTesting/);
 });
 
+test("motion feedback remains accessible, restrained, and reduced-motion safe", async () => {
+  const [styles, shell, gallery, configurator, cart, office, loading, packageSource] = await Promise.all([
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/StoreShell.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ProductGallery.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/ProductConfigurator.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/cart/CartPage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/office/OfficePilot.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/loading.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(shell, /role="status" aria-live="polite" aria-atomic="true"/);
+  assert.match(shell, /added to your cart/);
+  assert.match(shell, /Cart quantity updated/);
+  assert.match(gallery, /aria-live="polite" aria-atomic="true"/);
+  assert.match(gallery, /event\.key === "ArrowLeft"/);
+  assert.match(gallery, /event\.key === "ArrowRight"/);
+  assert.match(gallery, /ref=\{closeRef\}/);
+  assert.match(cart, /aria-busy=\{loadingGroup === "office"\}/);
+  assert.match(cart, /aria-busy=\{loadingGroup === "storefront"\}/);
+  assert.match(cart, /className="checkout-spinner" aria-hidden="true"/);
+  assert.match(office, /<details className="office-rack-details">/);
+  assert.match(office, /<summary>How the honor system works<\/summary>/);
+  assert.doesNotMatch(configurator, /setTimeout\(\(\) => setAdded\(false\)/);
+  assert.doesNotMatch(office, /setTimeout\(\(\) => setAdded\(false\)/);
+
+  assert.match(loading, /role="status" aria-live="polite"/);
+  assert.match(styles, /route-loading-in 500ms[^;]+150ms forwards/);
+  assert.match(styles, /@media \(hover: hover\) and \(pointer: fine\)/);
+  assert.match(styles, /\.gallery-previous, \.gallery-next \{[^}]*width: 44px; height: 44px/s);
+  assert.doesNotMatch(styles, /transition:\s*all\b/);
+  assert.doesNotMatch(styles, /outline:\s*(?:none|0)\b/);
+  const reducedMotionStart = styles.indexOf("@media (prefers-reduced-motion: reduce)");
+  assert.notEqual(reducedMotionStart, -1);
+  const reducedMotion = styles.slice(reducedMotionStart);
+  assert.match(reducedMotion, /transition: none/);
+  assert.match(reducedMotion, /animation: none/);
+
+  const packageJson = JSON.parse(packageSource);
+  assert.equal(packageJson.dependencies?.["framer-motion"], undefined);
+  assert.equal(packageJson.dependencies?.motion, undefined);
+});
+
 test("checkout keeps prices authoritative and secrets server-only", async () => {
   const [checkout, stripe, shell, cart] = await Promise.all([
     readFile(new URL("../app/api/checkout/route.ts", import.meta.url), "utf8"),
@@ -438,101 +487,77 @@ test("checkout keeps prices authoritative and secrets server-only", async () => 
   assert.match(checkout, /body\.fulfillment !== "pickup" \|\| isOfficeCheckout/);
   assert.match(checkout, /Jake will use your pickup note/);
   assert.match(checkout, /parseColorwaysMetadata\(product\.metadata\.colorways\)/);
+  assert.match(checkout, /checkLiveCatalogReadiness/);
+  assert.match(checkout, /productsTruncated: productsResult\.has_more/);
+  assert.match(checkout, /pricesTruncated: pricesResult\.has_more/);
+  assert.match(checkout, /checkout_catalog_unavailable/);
+  assert.match(checkout, /getValidatedSiteOrigin\(true\)/);
   assert.match(checkout, /selectedColorway/);
   assert.match(checkout, /Base: \$\{selectedColorway\.baseColor\}; Cap: \$\{selectedColorway\.capColor\}/);
   assert.match(cart, /availableItems\.map\(\(\{ priceId, quantity, color \}\)/);
   assert.match(cart, /maxLength=\{160\}/);
   assert.match(cart, /work pickup/);
   assert.match(cart, /pickupNote: pickupNote\.trim\(\)/);
+  assert.match(cart, /aria-pressed=\{fulfillment === "shipping"\}/);
+  assert.match(cart, /aria-pressed=\{fulfillment === "pickup"\}/);
+  assert.match(cart, /disabled=\{!checkoutEnabled \|\| loadingGroup/);
+  assert.doesNotMatch(cart, /Stripe test key|test catalog/);
   assert.match(checkout, /const hasActiveLicense = licenseStatus === "active" \|\| licenseStatus === "not_required"/);
   assert.doesNotMatch(shell, /STRIPE_SECRET_KEY/);
   assert.match(stripe, /process\.env\.STRIPE_SECRET_KEY/);
   assert.match(stripe, /STORE_LIVE_MODE/);
 });
 
-test("catalog seeding is test-mode only and idempotent", async () => {
-  const seed = await readFile(new URL("../scripts/seed-stripe-test-catalog.mjs", import.meta.url), "utf8");
-  assert.match(seed, /startsWith\("sk_test_"\)/);
-  assert.match(seed, /metadata\['seed_key'\]/);
-  assert.match(seed, /lookup_keys/);
-  assert.match(seed, /storefront: "true"/);
-  assert.match(seed, /demo: "false"/);
-  assert.match(seed, /retiredSeedKeys/);
-  assert.match(seed, /jakes-v1-japandi-paper-towel-holder/);
-  assert.match(seed, /Matte Dark Brown \(11801\)/);
-  assert.match(seed, /colorways:/);
-  assert.match(seed, /sabredesign_commercial/);
-  assert.match(seed, /sabreDesignPaperTowelHolderImages/);
-  assert.match(seed, /sabreDesignJapandiTrayImages/);
-  assert.match(seed, /sabreDesignAcornContainerImages/);
-  assert.match(seed, /sabreDesignMushroomContainerImages/);
-  assert.match(seed, /sabreDesignJunoTrayImages/);
-  assert.match(seed, /sabreDesignPhoneStandImages/);
-  assert.match(seed, /US146adb5b110ef3\/design\/2025-05-26_70b54048ecf5d\.png/);
-  assert.match(seed, /USb800abee08578\/design\/5f0b2aecabdde816\.png/);
-  assert.match(seed, /USf35f084eff6688\/design\/2025-08-15_55711c8d6c09c8\.png/);
-  assert.match(seed, /USa5c6c988f07bf3\/design\/2025-09-23_9db44544733358\.png/);
-  assert.match(seed, /USed922762b5dc30\/design\/34f8fd3120ed287d\.png/);
-  assert.match(seed, /USedc5387b4b8b54\/design\/2024-10-20_5e4b3349950a8\.png/);
-  assert.match(seed, /\.\.\.\(item\.images \? \{ images: item\.images \} : \{\}\)/);
-  assert.match(seed, /photo_status: "ready"/);
-  assert.match(seed, /license_status: "active"/);
-  assert.match(seed, /JPT-STANDARD/);
-  assert.match(seed, /JPT-XL/);
-  assert.match(seed, /3900/);
-  assert.match(seed, /5200/);
-  assert.match(seed, /jakes-v1-japandi-tray/);
-  assert.match(seed, /JTR-STANDARD/);
-  assert.match(seed, /2000/);
-  assert.match(seed, /jakes-v1-acorn-container/);
-  assert.match(seed, /Natural Acorn\|Caramel Acorn\|Terracotta Acorn\|Modern Acorn/);
-  assert.match(seed, /Matte Caramel \(11803\)/);
-  assert.match(seed, /Matte Terracotta \(11203\)/);
-  assert.match(seed, /ACN-STANDING/);
-  assert.match(seed, /2500/);
-  assert.match(seed, /jakes-v1-japandi-mushroom-container/);
-  assert.match(seed, /Sandstone\|Forest\|Blush\|Graphite/);
-  assert.match(seed, /Matte Ash Gray \(11102\)/);
-  assert.match(seed, /JMC-STANDARD/);
-  assert.match(seed, /jakes-v1-juno-display-tray/);
-  assert.match(seed, /JUNO-SOLID/);
-  assert.match(seed, /4200/);
-  assert.match(seed, /jakes-v1-sculptural-phone-stand/);
-  assert.match(seed, /Matte Apple Green \(11502\)/);
-  assert.match(seed, /SPS-STANDARD/);
-  assert.match(seed, /2400/);
-  assert.match(seed, /preview_only: "false"/);
-  assert.match(seed, /preview_message: ""/);
-  assert.match(seed, /pricing_pending: "false"/);
-  assert.match(seed, /jakes-office-keychain-rack/);
-  assert.match(seed, /jakes-v1-onami-2-headphone-stand/);
-  assert.match(seed, /jakes-office-desk-command-center/);
-  assert.match(seed, /jakes-office-tray-pencil-cup/);
-  assert.match(seed, /jakes-office-ribbed-organizer/);
-  assert.match(seed, /jakes-office-gear-phone-stand/);
-  assert.match(seed, /jakes-office-everyday-desk-valet/);
-  assert.match(seed, /jakes-office-dragon-skin-pencil-holder/);
-  assert.match(seed, /jakes-office-modular-desk-organizer/);
-  assert.match(seed, /OFFICE-KEYCHAIN/);
-  assert.match(seed, /OFFICE-KEYCHAIN-MULTI/);
-  assert.match(seed, /400/);
-  assert.match(seed, /min_quantity: minQuantity \? String\(minQuantity\) : ""/);
-  assert.match(seed, /max_quantity: maxQuantity \? String\(maxQuantity\) : ""/);
-  assert.doesNotMatch(seed, /OFFICE-MEYUI-DESK-SET/);
-  assert.doesNotMatch(seed, /OFFICE-DESK-COMMAND-CENTER|OFFICE-GEAR-PHONE-STAND/);
-  assert.doesNotMatch(seed, /Meyui|Deltaprints|Pork3D/);
-  assert.match(seed, /visibility: "office"/);
-  assert.match(seed, /office_fulfillment: "take_now"/);
-  assert.doesNotMatch(seed, /office_fulfillment: "work_delivery"/);
-  assert.match(seed, /ship: "true"/);
-  assert.match(seed, /photo_status: "missing"/);
-  assert.match(seed, /active: false/);
-  assert.match(seed, /color_hexes/);
-  assert.match(seed, /detail_copy/);
-  assert.match(seed, /dimensions/);
-  assert.match(seed, /stripe\.prices\.update/);
-  assert.match(seed, /transfer_lookup_key: true/);
-  assert.match(seed, /Stripe test catalog ready/);
+test("catalog sync is mode-safe, idempotent, and shared by test and live Stripe", async () => {
+  const [testSeed, liveSync, sync, manifest] = await Promise.all([
+    readFile(new URL("../scripts/seed-stripe-test-catalog.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/sync-stripe-live-catalog.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/stripe-catalog-sync.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/stripe-catalog-manifest.mjs", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(testSeed, /requireStripeKey\("test"\)/);
+  assert.match(testSeed, /--dry-run/);
+  assert.match(testSeed, /auditStripeCatalog/);
+  assert.match(testSeed, /Stripe test catalog ready/);
+  assert.match(liveSync, /requireStripeKey\("live"\)/);
+  assert.match(liveSync, /UPDATE_LIVE_STRIPE_CATALOG/);
+  assert.match(liveSync, /--apply/);
+  assert.match(liveSync, /strictStorefront: true/);
+  assert.match(sync, /\^sk_\(test\|live\)_/);
+  assert.match(sync, /metadata\['seed_key'\]/);
+  assert.match(sync, /lookup_keys/);
+  assert.match(sync, /catalog_version/);
+  assert.match(sync, /tax_code: stripeProductTaxCode/);
+  assert.match(sync, /tax_behavior: desiredPrice\.taxBehavior/);
+  assert.match(sync, /stripe\.products\.update/);
+  assert.match(sync, /stripe\.prices\.update/);
+  assert.match(sync, /transfer_lookup_key: true/);
+  assert.match(sync, /idempotencyKey: syncIdempotencyKey/);
+  assert.match(sync, /active: false/);
+  assert.match(sync, /retired product remains available/);
+
+  assert.match(manifest, /stripeCatalogVersion = "2026-07-16\.1"/);
+  assert.match(manifest, /stripeProductTaxCode = "txcd_99999999"/);
+  assert.match(manifest, /jakes-v1-japandi-paper-towel-holder/);
+  assert.match(manifest, /JPT-STANDARD/);
+  assert.match(manifest, /JPT-XL/);
+  assert.match(manifest, /3900/);
+  assert.match(manifest, /5200/);
+  assert.match(manifest, /jakes-v1-japandi-tray/);
+  assert.match(manifest, /jakes-v1-acorn-container/);
+  assert.match(manifest, /jakes-v1-japandi-mushroom-container/);
+  assert.match(manifest, /jakes-v1-juno-display-tray/);
+  assert.match(manifest, /jakes-v1-sculptural-phone-stand/);
+  assert.match(manifest, /jakes-office-keychain-rack/);
+  assert.match(manifest, /OFFICE-KEYCHAIN-MULTI/);
+  assert.match(manifest, /visibility: "office"/);
+  assert.match(manifest, /office_fulfillment: "take_now"/);
+  assert.match(manifest, /sabredesign_commercial/);
+  assert.match(manifest, /\/products\/sabredesign\/japandi-paper-towel-holder-01\.webp/);
+  assert.match(manifest, /\/products\/sabredesign\/sculptural-phone-stand-01\.webp/);
+  assert.doesNotMatch(manifest, /makerworld\.bblmw\.com/);
+  assert.doesNotMatch(manifest, /Meyui|Deltaprints|Pork3D/);
 });
 
 test("office checkout remains keychain-only while public commercial previews are server-gated", async () => {
@@ -562,6 +587,7 @@ test("office checkout remains keychain-only while public commercial previews are
   assert.match(checkout, /isOfficeCheckout\s*\? \{\}\s*:\s*\{\s*phone_number_collection/);
   assert.match(checkout, /shipping_amount = body\.fulfillment === "shipping" \? String\(shippingAmount\) : "0"/);
   assert.match(success, /Payment confirmed—take one available keychain/);
+  assert.match(success, /checkoutSessionIdPattern/);
   assert.match(success, /deliver your made-to-order item at work/);
   assert.match(success, /pickupNoteReceived/);
   assert.match(success, /Jake received your pickup note/);

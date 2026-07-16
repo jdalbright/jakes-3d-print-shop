@@ -9,20 +9,26 @@
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run lint && npm run typecheck && npm test",
     "stripe:seed": "node --env-file-if-exists=.env.local scripts/seed-stripe-test-catalog.mjs",
+    "stripe:seed:dry-run": "node --env-file-if-exists=.env.local scripts/seed-stripe-test-catalog.mjs --dry-run",
+    "stripe:live:audit": "node --env-file-if-exists=.env.live.local scripts/sync-stripe-live-catalog.mjs --dry-run",
+    "stripe:live:sync": "node --env-file-if-exists=.env.live.local scripts/sync-stripe-live-catalog.mjs --apply",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
-    "next": "16.2.6",
+    "next": "16.2.10",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "stripe": "^22.3.1"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.37.1",
+    "@cloudflare/vite-plugin": "1.45.0",
+    "@cloudflare/workers-types": "5.20260716.1",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
@@ -31,13 +37,13 @@
     "@vitejs/plugin-rsc": "0.5.26",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
+    "eslint-config-next": "16.2.10",
     "react-server-dom-webpack": "19.2.6",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vinext": "0.0.50",
-    "vite": "8.0.13",
-    "wrangler": "4.92.0"
+    "vite": "8.1.5",
+    "wrangler": "4.111.0"
   },
   "type": "module"
 }

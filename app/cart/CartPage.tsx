@@ -29,6 +29,7 @@ export function CartPage() {
   const [pickupNote, setPickupNote] = useState("");
   const [loadingGroup, setLoadingGroup] = useState<CheckoutGroup | null>(null);
   const [error, setError] = useState<{ group: CheckoutGroup; message: string } | null>(null);
+  const [cartFeedback, setCartFeedback] = useState({ id: 0, itemKey: "" });
 
   const officeItems = useMemo(
     () => items.filter((item) => item.salesChannel === "office_nfc"),
@@ -54,7 +55,7 @@ export function CartPage() {
     checkoutItemCount: number,
   ) {
     if (!checkoutEnabled) {
-      setError({ group, message: "Checkout is waiting for a Stripe test key and test products." });
+      setError({ group, message: "Checkout is temporarily unavailable. Please try again later." });
       return;
     }
     setLoadingGroup(group);
@@ -165,8 +166,10 @@ export function CartPage() {
             const unavailable = !isOfficeItem && (fulfillment === "shipping" ? !item.ship : !item.pickup);
             const minQuantity = Math.max(1, item.minQuantity ?? 1);
             const maxQuantity = Math.max(minQuantity, Math.min(10, item.maxQuantity ?? 10));
+            const itemKey = `${item.priceId}-${item.color}`;
+            const itemWasUpdated = cartFeedback.itemKey === itemKey;
             return (
-              <article className={`cart-item ${unavailable ? "unavailable" : ""}`} key={`${item.priceId}-${item.color}`}>
+              <article className={`cart-item ${unavailable ? "unavailable" : ""}`} key={itemKey}>
                 <Link href={isOfficeItem ? "/office" : `/products/${item.slug}`}><ProductVisual product={product} /></Link>
                 <div className="cart-item-copy">
                   <div>
@@ -178,7 +181,13 @@ export function CartPage() {
                   {unavailable ? <span className="item-warning">Not available for {fulfillment}</span> : null}
                   <div className="cart-item-actions">
                     <label>Qty
-                      <select value={item.quantity} onChange={(event) => updateQuantity(item.priceId, item.color, Number(event.target.value))}>
+                      <select
+                        value={item.quantity}
+                        onChange={(event) => {
+                          updateQuantity(item.priceId, item.color, Number(event.target.value));
+                          setCartFeedback((current) => ({ id: current.id + 1, itemKey }));
+                        }}
+                      >
                         {Array.from({ length: maxQuantity - minQuantity + 1 }, (_, index) => minQuantity + index).map((qty) => <option key={qty}>{qty}</option>)}
                       </select>
                     </label>
@@ -186,7 +195,7 @@ export function CartPage() {
                     <button type="button" onClick={() => removeItem(item.priceId, item.color)}>Remove</button>
                   </div>
                 </div>
-                <strong>{money(item.unitAmount * item.quantity)}</strong>
+                <strong className={`cart-line-total ${itemWasUpdated ? "is-updated" : ""}`} key={itemWasUpdated ? `${itemKey}-${cartFeedback.id}` : itemKey}>{money(item.unitAmount * item.quantity)}</strong>
               </article>
             );
           })}
@@ -199,13 +208,13 @@ export function CartPage() {
               <h2>Pay for the keychain when you’re ready.</h2>
               <p className="cart-checkout-copy">It stays saved here while you browse. The rack item uses its own pickup checkout, separate from made-to-order shop items.</p>
               <dl className="order-totals">
-                <div><dt>Rack item</dt><dd>{money(officeSubtotal)}</dd></div>
+                <div><dt>Rack item</dt><dd className={`cart-total-value ${cartFeedback.id ? "is-updated" : ""}`} key={`office-subtotal-${cartFeedback.id}`}>{money(officeSubtotal)}</dd></div>
                 <div><dt>Pickup</dt><dd>Free</dd></div>
-                <div className="total"><dt>Keychain total</dt><dd>{money(officeSubtotal)}</dd></div>
+                <div className="total"><dt>Keychain total</dt><dd className={`cart-total-value ${cartFeedback.id ? "is-updated" : ""}`} key={`office-total-${cartFeedback.id}`}>{money(officeSubtotal)}</dd></div>
               </dl>
               {error?.group === "office" ? <p className="checkout-error" role="alert">{error.message}</p> : null}
-              <button className="primary-button checkout-button" disabled={loadingGroup !== null || officeItems.length !== 1} onClick={checkoutOffice} type="button">
-                {loadingGroup === "office" ? "Opening Stripe…" : "Checkout keychain separately"}
+              <button className="primary-button checkout-button" aria-busy={loadingGroup === "office"} disabled={!checkoutEnabled || loadingGroup !== null || officeItems.length !== 1} onClick={checkoutOffice} type="button">
+                {loadingGroup === "office" ? <><span className="checkout-spinner" aria-hidden="true" />Opening Stripe…</> : "Checkout keychain separately"}
               </button>
               <Link className="cart-continue-link" href="/products">Add another object</Link>
             </section>
@@ -225,10 +234,16 @@ export function CartPage() {
                 </>
               ) : null}
               <div className="fulfillment-options">
-                <button className={fulfillment === "shipping" ? "selected" : ""} onClick={() => setFulfillment("shipping")} type="button">
+                <button className={fulfillment === "shipping" ? "selected" : ""} onClick={() => {
+                  setFulfillment("shipping");
+                  setCartFeedback((current) => ({ id: current.id + 1, itemKey: "" }));
+                }} type="button" aria-pressed={fulfillment === "shipping"}>
                   <span><b>Ship it</b><small>Flat rate anywhere in the U.S.</small></span><i>{money(STANDARD_US_SHIPPING_CENTS)}</i>
                 </button>
-                <button className={fulfillment === "pickup" ? "selected" : ""} onClick={() => setFulfillment("pickup")} type="button">
+                <button className={fulfillment === "pickup" ? "selected" : ""} onClick={() => {
+                  setFulfillment("pickup");
+                  setCartFeedback((current) => ({ id: current.id + 1, itemKey: "" }));
+                }} type="button" aria-pressed={fulfillment === "pickup"}>
                   <span><b>{PICKUP_AREA} pickup</b><small>Work with Jake? Add a work-pickup note below.</small></span><i>Free</i>
                 </button>
               </div>
@@ -247,19 +262,19 @@ export function CartPage() {
               ) : null}
               {excludedCount ? <p className="order-warning">{excludedCount} item{excludedCount === 1 ? " is" : "s are"} unavailable for this fulfillment method and won’t be checked out.</p> : null}
               <dl className="order-totals">
-                <div><dt>Subtotal</dt><dd>{money(subtotal)}</dd></div>
-                <div><dt>{fulfillment === "shipping" ? "Shipping" : "Pickup"}</dt><dd>{shipping ? money(shipping) : "Free"}</dd></div>
-                <div className="total"><dt>Estimated total</dt><dd>{money(subtotal + shipping)}</dd></div>
+                <div><dt>Subtotal</dt><dd className={`cart-total-value ${cartFeedback.id ? "is-updated" : ""}`} key={`subtotal-${cartFeedback.id}`}>{money(subtotal)}</dd></div>
+                <div><dt>{fulfillment === "shipping" ? "Shipping" : "Pickup"}</dt><dd className={`cart-total-value ${cartFeedback.id ? "is-updated" : ""}`} key={`fulfillment-${cartFeedback.id}`}>{shipping ? money(shipping) : "Free"}</dd></div>
+                <div className="total"><dt>Estimated total</dt><dd className={`cart-total-value ${cartFeedback.id ? "is-updated" : ""}`} key={`total-${cartFeedback.id}`}>{money(subtotal + shipping)}</dd></div>
               </dl>
               {fulfillment === "shipping" ? <p className="shipping-progress">One flat shipping charge applies to these shop items.</p> : null}
               {error?.group === "storefront" ? <p className="checkout-error" role="alert">{error.message}</p> : null}
-              <button className="primary-button checkout-button" disabled={loadingGroup !== null || !availableItems.length} onClick={checkoutStorefront} type="button">
-                {loadingGroup === "storefront" ? "Opening Stripe…" : officeItems.length ? "Checkout other items" : "Continue to secure checkout"}
+              <button className="primary-button checkout-button" aria-busy={loadingGroup === "storefront"} disabled={!checkoutEnabled || loadingGroup !== null || !availableItems.length} onClick={checkoutStorefront} type="button">
+                {loadingGroup === "storefront" ? <><span className="checkout-spinner" aria-hidden="true" />Opening Stripe…</> : officeItems.length ? "Checkout other items" : "Continue to secure checkout"}
               </button>
             </section>
           ) : null}
 
-          {!checkoutEnabled ? <div className="test-callout"><b>Checkout is safely paused.</b><span>Add a Stripe test key and test catalog to enable test payments.</span></div> : null}
+          {!checkoutEnabled ? <div className="test-callout" role="status"><b>Ordering is temporarily unavailable.</b><span>Your cart remains saved on this device. Please try again later.</span></div> : null}
           <p className="secure-note">{officeItems.length && storefrontItems.length ? "Rack and shop items use two separate secure Stripe payments." : "Payment details are collected securely on Stripe."}</p>
         </aside>
       </div>

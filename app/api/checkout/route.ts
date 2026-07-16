@@ -1,21 +1,143 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { parseColorwaysMetadata } from "../../lib/catalog-metadata";
+import { checkLiveCatalogReadiness } from "../../lib/catalog-readiness";
 import { commercialMetadataOrderReady } from "../../lib/commercial-license";
-import { getStripe, isLiveLaunchEnabled } from "../../lib/stripe";
+import {
+  checkRateLimit,
+  hasOnlyKeys,
+  hasTrustedBrowserOrigin,
+  isStrictObject,
+  readJsonBody,
+} from "../../lib/request-security";
+import { getStripe, getValidatedSiteOrigin, isLiveLaunchEnabled } from "../../lib/stripe";
 import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
 import type { Fulfillment } from "../../lib/types";
 
 type CheckoutItem = { priceId: string; quantity: number; color: string };
 type CheckoutBody = {
-  items?: CheckoutItem[];
-  fulfillment?: Fulfillment;
+  items: CheckoutItem[];
+  fulfillment: Fulfillment;
   pickupNote?: string;
   salesChannel?: "office_nfc";
   checkoutOrigin?: "cart";
 };
 
 const safeIdempotencyKey = /^[a-zA-Z0-9_-]{8,255}$/;
+const safePriceId = /^price_[a-zA-Z0-9]{8,240}$/;
+const checkoutKeys = new Set(["items", "fulfillment", "pickupNote", "salesChannel", "checkoutOrigin"]);
+const checkoutItemKeys = new Set(["priceId", "quantity", "color"]);
+const checkoutBodyLimit = 16 * 1_024;
+const unsafeControlCharacters = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+
+type CheckoutConflictCode =
+  | "invalid_channel"
+  | "invalid_color"
+  | "invalid_price"
+  | "invalid_quantity_tier"
+  | "license_unavailable"
+  | "photo_unavailable"
+  | "pickup_unavailable"
+  | "preview_only"
+  | "shipping_unavailable"
+  | "sold_out";
+
+class CheckoutConflict extends Error {
+  constructor(readonly code: CheckoutConflictCode) {
+    super(code);
+    this.name = "CheckoutConflict";
+  }
+}
+
+function checkoutJson(error: string, status: number, headers?: HeadersInit) {
+  return NextResponse.json(
+    { error },
+    {
+      status,
+      headers: {
+        "Cache-Control": "private, no-store",
+        ...headers,
+      },
+    },
+  );
+}
+
+function parseCheckoutBody(value: unknown): CheckoutBody | null {
+  if (!isStrictObject(value) || !hasOnlyKeys(value, checkoutKeys)) return null;
+  if (!Array.isArray(value.items) || value.items.length < 1 || value.items.length > 20) return null;
+  if (value.fulfillment !== "shipping" && value.fulfillment !== "pickup") return null;
+  if (value.salesChannel !== undefined && value.salesChannel !== "office_nfc") return null;
+  if (value.checkoutOrigin !== undefined && value.checkoutOrigin !== "cart") return null;
+  if (
+    value.pickupNote !== undefined
+    && (typeof value.pickupNote !== "string" || unsafeControlCharacters.test(value.pickupNote))
+  ) {
+    return null;
+  }
+
+  const items: CheckoutItem[] = [];
+  for (const candidate of value.items) {
+    if (!isStrictObject(candidate) || !hasOnlyKeys(candidate, checkoutItemKeys)) return null;
+    if (typeof candidate.priceId !== "string" || !safePriceId.test(candidate.priceId)) return null;
+    if (
+      typeof candidate.quantity !== "number"
+      || !Number.isInteger(candidate.quantity)
+      || candidate.quantity < 1
+      || candidate.quantity > 10
+    ) {
+      return null;
+    }
+    if (typeof candidate.color !== "string") return null;
+    const color = candidate.color.trim();
+    if (!color || color.length > 80 || unsafeControlCharacters.test(color)) return null;
+    items.push({ priceId: candidate.priceId, quantity: candidate.quantity, color });
+  }
+
+  return {
+    items,
+    fulfillment: value.fulfillment,
+    ...(value.pickupNote !== undefined ? { pickupNote: value.pickupNote } : {}),
+    ...(value.salesChannel !== undefined ? { salesChannel: value.salesChannel } : {}),
+    ...(value.checkoutOrigin !== undefined ? { checkoutOrigin: value.checkoutOrigin } : {}),
+  };
+}
+
+function checkoutConflictMessage(code: CheckoutConflictCode): string {
+  if (code === "sold_out") return "An item in your cart just sold out.";
+  if (code === "license_unavailable") return "This product is not available for live checkout yet.";
+  if (code === "photo_unavailable") return "Original product photos are required before this listing can accept live payments.";
+  if (code === "preview_only") return "This made-to-order product is not available to order yet.";
+  if (code === "invalid_channel") return "This item is not available through that checkout page.";
+  if (code === "invalid_quantity_tier") return "That quantity does not match the selected price. Refresh the page and try again.";
+  if (code === "shipping_unavailable" || code === "pickup_unavailable") {
+    return "An item is not available for the selected fulfillment method.";
+  }
+  return "A product option changed. Refresh the shop and try again.";
+}
+
+function isMissingStripeResource(error: unknown): boolean {
+  if (!isStrictObject(error)) return false;
+  return error.type === "StripeInvalidRequestError" && error.code === "resource_missing";
+}
+
+function operationalErrorDetails(error: unknown) {
+  if (!isStrictObject(error)) return { type: "unknown" };
+  const type = typeof error.type === "string" && /^[a-zA-Z0-9_]{1,64}$/.test(error.type)
+    ? error.type
+    : "unknown";
+  const code = typeof error.code === "string" && /^[a-zA-Z0-9_]{1,64}$/.test(error.code)
+    ? error.code
+    : undefined;
+  const status = typeof error.statusCode === "number" ? error.statusCode : undefined;
+  return { type, ...(code ? { code } : {}), ...(status ? { status } : {}) };
+}
+
+function configuredCheckoutSiteUrl(request: Request): string {
+  const configuredOrigin = getValidatedSiteOrigin(isLiveLaunchEnabled());
+  if (configuredOrigin) return configuredOrigin;
+  if (process.env.SITE_URL || isLiveLaunchEnabled()) throw new Error("invalid_site_url");
+  return new URL(request.url).origin;
+}
 
 function metadataBool(value: string | undefined, fallback = true) {
   if (value === undefined) return fallback;
@@ -25,61 +147,88 @@ function metadataBool(value: string | undefined, fallback = true) {
 function quantityBound(value: string | undefined) {
   if (!value) return null;
   const quantity = Number(value);
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) throw new Error("invalid_price");
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) throw new CheckoutConflict("invalid_price");
   return quantity;
 }
 
 export async function POST(request: Request) {
-  const stripe = getStripe();
-  if (!stripe) {
-    return NextResponse.json({ error: "Stripe test checkout is not configured yet." }, { status: 503 });
+  if (!hasTrustedBrowserOrigin(request)) {
+    return checkoutJson("Invalid checkout origin.", 403);
   }
 
-  let body: CheckoutBody;
-  try {
-    body = (await request.json()) as CheckoutBody;
-  } catch {
-    return NextResponse.json({ error: "Invalid checkout request." }, { status: 400 });
+  const rateLimit = checkRateLimit(request, { scope: "checkout", limit: 12, windowMs: 60_000 });
+  if (!rateLimit.allowed) {
+    return checkoutJson("Too many checkout attempts. Please wait and try again.", 429, {
+      "Retry-After": String(rateLimit.retryAfterSeconds),
+    });
   }
 
-  if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 20) {
-    return NextResponse.json({ error: "Your cart must contain between 1 and 20 items." }, { status: 400 });
+  const parsedBody = await readJsonBody(request, checkoutBodyLimit);
+  if (!parsedBody.ok) {
+    return parsedBody.reason === "too_large"
+      ? checkoutJson("Checkout payload is too large.", 413)
+      : checkoutJson("Invalid checkout request.", 400);
   }
-  if (body.fulfillment !== "shipping" && body.fulfillment !== "pickup") {
-    return NextResponse.json({ error: "Choose shipping or Raleigh pickup." }, { status: 400 });
-  }
-  if (body.salesChannel !== undefined && body.salesChannel !== "office_nfc") {
-    return NextResponse.json({ error: "Invalid sales channel." }, { status: 400 });
-  }
-  if (body.checkoutOrigin !== undefined && body.checkoutOrigin !== "cart") {
-    return NextResponse.json({ error: "Invalid checkout origin." }, { status: 400 });
+
+  const body = parseCheckoutBody(parsedBody.value);
+  if (!body) {
+    return checkoutJson("Invalid checkout request.", 400);
   }
 
   const isOfficeCheckout = body.salesChannel === "office_nfc";
   if (isOfficeCheckout && (body.fulfillment !== "pickup" || body.items.length !== 1)) {
-    return NextResponse.json({ error: "Office checkout supports one pickup item at a time." }, { status: 400 });
+    return checkoutJson("Office checkout supports one pickup item at a time.", 400);
   }
   if (body.pickupNote !== undefined && (typeof body.pickupNote !== "string" || body.pickupNote.length > 160)) {
-    return NextResponse.json({ error: "Pickup notes must be 160 characters or fewer." }, { status: 400 });
+    return checkoutJson("Pickup notes must be 160 characters or fewer.", 400);
   }
   const pickupNote = typeof body.pickupNote === "string"
     ? body.pickupNote.replace(/\s+/g, " ").trim()
     : "";
   if (pickupNote && (body.fulfillment !== "pickup" || isOfficeCheckout)) {
-    return NextResponse.json({ error: "Pickup notes are available for storefront pickup orders only." }, { status: 400 });
+    return checkoutJson("Pickup notes are available for storefront pickup orders only.", 400);
   }
 
-  const normalizedItems = body.items.map((item) => ({
-    priceId: typeof item.priceId === "string" ? item.priceId : "",
-    quantity: Number(item.quantity),
-    color: typeof item.color === "string" ? item.color.trim() : "",
-  }));
-
-  if (normalizedItems.some((item) => !item.priceId.startsWith("price_") || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 10 || !item.color || item.color.length > 80)) {
-    return NextResponse.json({ error: "One or more cart selections are invalid." }, { status: 400 });
+  const idempotencyKey = request.headers.get("idempotency-key");
+  if (idempotencyKey !== null && !safeIdempotencyKey.test(idempotencyKey)) {
+    return checkoutJson("Invalid checkout request.", 400);
   }
+
+  if (process.env.STORE_LIVE_MODE === "true" && !isLiveLaunchEnabled()) {
+    return checkoutJson("Checkout is temporarily unavailable.", 503);
+  }
+  if (isLiveLaunchEnabled() && process.env.STRIPE_AUTOMATIC_TAX !== "true") {
+    return checkoutJson("Checkout is temporarily unavailable.", 503);
+  }
+  if (isLiveLaunchEnabled() && !getValidatedSiteOrigin(true)) {
+    return checkoutJson("Checkout is temporarily unavailable.", 503);
+  }
+
+  const stripe = getStripe();
+  if (!stripe) {
+    return checkoutJson("Checkout is temporarily unavailable.", 503);
+  }
+
+  const normalizedItems = body.items;
 
   try {
+    if (isLiveLaunchEnabled()) {
+      const [productsResult, pricesResult] = await Promise.all([
+        stripe.products.list({ active: true, limit: 100 }),
+        stripe.prices.list({ active: true, limit: 100 }),
+      ]);
+      const readiness = checkLiveCatalogReadiness({
+        products: productsResult.data,
+        prices: pricesResult.data,
+        productsTruncated: productsResult.has_more,
+        pricesTruncated: pricesResult.has_more,
+      });
+      if (!readiness.ready) {
+        console.error("checkout_catalog_unavailable", { issues: readiness.issues });
+        return checkoutJson("Checkout is temporarily unavailable.", 503);
+      }
+    }
+
     const prices = await Promise.all(
       normalizedItems.map((item) => stripe.prices.retrieve(item.priceId, { expand: ["product"] })),
     );
@@ -92,53 +241,69 @@ export async function POST(request: Request) {
     let officeFulfillment: "take_now" | "work_delivery" | null = null;
 
     prices.forEach((price, index) => {
-      const product = price.product as Stripe.Product;
       const item = normalizedItems[index];
-      if (!price.active || price.type !== "one_time" || price.currency !== "usd" || typeof price.unit_amount !== "number" || !product || product.deleted || !product.active || product.metadata.storefront !== "true") {
-        throw new Error("invalid_price");
+      const expandedProduct = price.product;
+      if (
+        !price.active
+        || price.type !== "one_time"
+        || price.currency !== "usd"
+        || typeof price.unit_amount !== "number"
+        || typeof expandedProduct !== "object"
+        || expandedProduct === null
+        || ("deleted" in expandedProduct && expandedProduct.deleted)
+      ) {
+        throw new CheckoutConflict("invalid_price");
       }
+      const product = expandedProduct as Stripe.Product;
+      if (!product.active || product.metadata.storefront !== "true") throw new CheckoutConflict("invalid_price");
       const visibility = product.metadata.visibility === "office" ? "office" : "public";
       if (isOfficeCheckout ? visibility !== "office" : visibility === "office") {
-        throw new Error("invalid_channel");
+        throw new CheckoutConflict("invalid_channel");
       }
       const colors = (product.metadata.colors || "As shown").split(/[|,]/).map((color) => color.trim().toLowerCase());
-      if (!colors.includes(item.color.toLowerCase())) throw new Error("invalid_color");
+      if (!colors.includes(item.color.toLowerCase())) throw new CheckoutConflict("invalid_color");
       const colorways = parseColorwaysMetadata(product.metadata.colorways);
       const selectedColorway = colorways.find((colorway) => colorway.label.toLowerCase() === item.color.toLowerCase());
-      if (product.metadata.colorways && !selectedColorway) throw new Error("invalid_color");
-      if (product.metadata.stock_status === "sold_out") throw new Error("sold_out");
+      if (product.metadata.colorways && !selectedColorway) throw new CheckoutConflict("invalid_color");
+      if (product.metadata.stock_status === "sold_out") throw new CheckoutConflict("sold_out");
       const minQuantity = quantityBound(price.metadata.min_quantity);
       const maxQuantity = quantityBound(price.metadata.max_quantity);
       if ((minQuantity !== null && item.quantity < minQuantity) || (maxQuantity !== null && item.quantity > maxQuantity)) {
-        throw new Error("invalid_quantity_tier");
+        throw new CheckoutConflict("invalid_quantity_tier");
       }
-      if (minQuantity !== null && maxQuantity !== null && minQuantity > maxQuantity) throw new Error("invalid_price");
+      if (minQuantity !== null && maxQuantity !== null && minQuantity > maxQuantity) {
+        throw new CheckoutConflict("invalid_price");
+      }
       const licenseStatus = product.metadata.license_status;
       const hasActiveLicense = licenseStatus === "active" || licenseStatus === "not_required";
       if (!commercialMetadataOrderReady(product.metadata)) {
-        throw new Error("preview_only");
+        throw new CheckoutConflict("preview_only");
       }
       if (isLiveLaunchEnabled() && !hasActiveLicense) {
-        throw new Error("license_unavailable");
+        throw new CheckoutConflict("license_unavailable");
       }
       if (isOfficeCheckout) {
         const trustedOfficeFulfillment = product.metadata.office_fulfillment;
         if (trustedOfficeFulfillment !== "take_now" && trustedOfficeFulfillment !== "work_delivery") {
-          throw new Error("invalid_channel");
+          throw new CheckoutConflict("invalid_channel");
         }
         officeFulfillment = trustedOfficeFulfillment;
       }
-      if (body.fulfillment === "shipping" && !metadataBool(product.metadata.ship)) throw new Error("shipping_unavailable");
-      if (body.fulfillment === "pickup" && !metadataBool(product.metadata.pickup)) throw new Error("pickup_unavailable");
+      if (body.fulfillment === "shipping" && !metadataBool(product.metadata.ship)) {
+        throw new CheckoutConflict("shipping_unavailable");
+      }
+      if (body.fulfillment === "pickup" && !metadataBool(product.metadata.pickup)) {
+        throw new CheckoutConflict("pickup_unavailable");
+      }
       subtotal += price.unit_amount * item.quantity;
+      if (!Number.isSafeInteger(subtotal)) throw new CheckoutConflict("invalid_price");
       const selectedColor = selectedColorway
         ? `${item.color}|Base: ${selectedColorway.baseColor}; Cap: ${selectedColorway.capColor}`
         : item.color;
       metadata[`item_${index + 1}`] = `${price.id}|${item.quantity}|${selectedColor}`.slice(0, 500);
     });
 
-    const configuredSiteUrl = process.env.SITE_URL?.replace(/\/$/, "");
-    const siteUrl = configuredSiteUrl || new URL(request.url).origin;
+    const siteUrl = configuredCheckoutSiteUrl(request);
     const shippingAmount = STANDARD_US_SHIPPING_CENTS;
     metadata.order_subtotal = String(subtotal);
     metadata.shipping_amount = body.fulfillment === "shipping" ? String(shippingAmount) : "0";
@@ -202,33 +367,24 @@ export async function POST(request: Request) {
             }),
       },
       {
-        idempotencyKey: safeIdempotencyKey.test(request.headers.get("Idempotency-Key") || "")
-          ? request.headers.get("Idempotency-Key") || undefined
-          : undefined,
+        idempotencyKey: idempotencyKey || undefined,
       },
     );
 
-    if (!session.url) throw new Error("missing_url");
-    return NextResponse.json({ url: session.url });
+    if (!session.url) throw new Error("missing_checkout_url");
+    return NextResponse.json(
+      { url: session.url },
+      { headers: { "Cache-Control": "private, no-store" } },
+    );
   } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    const userMessage = message === "sold_out"
-      ? "An item in your cart just sold out."
-      : message === "license_unavailable"
-        ? "This product is not available for live checkout yet."
-      : message === "photo_unavailable"
-        ? "Original product photos are required before this listing can accept live payments."
-      : message === "preview_only"
-        ? "This made-to-order product is a preview until its commercial license, original photo, and required seller verification are in place."
-      : message === "invalid_channel"
-        ? "This item is not available through that checkout page."
-      : message === "invalid_quantity_tier"
-        ? "That quantity does not match the selected price. Refresh the page and try again."
-      : message.includes("unavailable")
-        ? "An item is not available for the selected fulfillment method."
-        : message === "invalid_color" || message === "invalid_price"
-          ? "A product option changed. Refresh the shop and try again."
-          : "Stripe checkout could not be started. Please try again.";
-    return NextResponse.json({ error: userMessage }, { status: 400 });
+    if (error instanceof CheckoutConflict) {
+      return checkoutJson(checkoutConflictMessage(error.code), 409);
+    }
+    if (isMissingStripeResource(error)) {
+      return checkoutJson(checkoutConflictMessage("invalid_price"), 409);
+    }
+
+    console.error("checkout_start_failed", operationalErrorDetails(error));
+    return checkoutJson("Checkout is temporarily unavailable. Please try again.", 503);
   }
 }

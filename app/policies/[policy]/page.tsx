@@ -3,48 +3,59 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PICKUP_AREA, STANDARD_US_SHIPPING_CENTS } from "../../lib/store-config";
 
-const shippingPrice = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(STANDARD_US_SHIPPING_CENTS / 100);
+const EFFECTIVE_DATE = "July 16, 2026";
+const SUPPORT_EMAIL = process.env.CONTACT_EMAIL?.trim() || "hello@jalbright.dev";
+const shippingPrice = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+}).format(STANDARD_US_SHIPPING_CENTS / 100);
 
 const policies = {
   shipping: {
     title: "Shipping & pickup",
-    intro: "A plain-language draft for test-shop review. Confirm these details before public launch.",
+    description: "Production timing, U.S. shipping, and Raleigh pickup details for Jake’s 3D Print Shop.",
+    intro: "Each item is prepared in Raleigh, North Carolina, then shipped in the U.S. or handed off through prepaid local pickup.",
     sections: [
-      ["U.S. shipping", `Flat-rate U.S. shipping is ${shippingPrice} per order. Delivery estimates begin after the print is ready.`],
-      ["Make time", "Most items are made or prepared within 3–5 business days. Larger batches or unusual colors may take longer; Jake will email if timing changes."],
-      ["Raleigh pickup", `Pickup in ${PICKUP_AREA} is free and prepaid through Stripe. The exact pickup address is kept private. Jake will email after payment to coordinate the handoff.`],
-      ["Address problems", "Customers are responsible for entering a complete shipping address. Contact the shop as soon as possible if an address needs correction."],
+      ["Production time", "Most orders are printed and prepared within 3–5 business days. This is production time, not carrier transit time. If an order needs longer, the shop will email you with an updated estimate."],
+      ["U.S. shipping", `Standard U.S. shipping is a flat ${shippingPrice} per order. A delivery estimate begins after the carrier accepts the package. Carrier delays are outside the shop’s direct control, but the shop will help investigate a delayed or missing package.`],
+      ["Raleigh pickup", `Prepaid pickup in ${PICKUP_AREA} is free. The exact handoff location is kept private and is not published on the site. The shop will email you when the order is ready and coordinate a pickup time and location.`],
+      ["Addresses and delivery issues", "Please enter a complete, accurate shipping address at checkout. Email the shop immediately if it needs to be corrected. Once a package has shipped, an address change may not be possible. If tracking shows a problem, contact the shop so it can work with the carrier."],
     ],
   },
   returns: {
-    title: "Returns & damaged orders",
-    intro: "A draft policy for the test shop. Review and approve it before accepting live orders.",
+    title: "Returns & order issues",
+    description: "Cancellation, final-sale, damage, and defect terms for made-to-order purchases.",
+    intro: "Made-to-order prints are produced in the size and color selected at checkout. The policy below keeps cancellations flexible before production and provides a clear remedy for damaged or defective items.",
     sections: [
-      ["Damaged orders", "Photograph the item and packaging and contact the shop within 7 days of delivery so Jake can evaluate a replacement or refund."],
-      ["Made-to-order items", "Color and size selections are made for each buyer. Returns for preference changes are not automatically accepted, but the shop will always try to find a fair solution."],
-      ["Cancellations", "Ask to cancel as soon as possible. An order can be refunded if printing has not begun; Stripe processing fees may be handled according to the final approved policy."],
-      ["Test-store notice", "No live orders should be placed while the site displays the test-store banner."],
+      ["Cancel before printing", "You may cancel for a full refund any time before printing begins. Email the shop as soon as possible with the order email address so production can be checked and stopped."],
+      ["After printing begins", "Once printing begins, the item is final sale and cannot be returned or canceled for a change of mind, color preference, or an incorrect option selected by the customer. This does not limit the damage and defect protection below."],
+      ["Damage, defects, or the wrong item", "Contact the shop within 7 days of delivery or pickup if an item arrives damaged, has a material defect, or is not what you ordered. Include the order email address and clear photos of the item and packaging. After review, the shop will provide an appropriate replacement or a refund to the original payment method."],
+      ["Natural print variation", "Layer lines, seams, and small surface variations are normal characteristics of 3D printing and are not defects by themselves. A substantial flaw that affects the item’s appearance or intended use is covered by the damage and defect process."],
     ],
   },
   privacy: {
     title: "Privacy",
-    intro: "A minimal draft describing the intended data flow. It is not a substitute for an approved privacy policy.",
+    description: "How Jake’s 3D Print Shop handles checkout, fulfillment, cart, and storefront activity data.",
+    intro: "The shop collects only the information needed to process orders, provide support, understand basic storefront use, and meet business obligations.",
     sections: [
-      ["What the shop receives", "Stripe provides the contact, order, payment status, and fulfillment details needed to prepare and deliver an order."],
-      ["Payment details", "Card and bank details are collected by Stripe on its hosted checkout. Jake’s 3D Print Shop does not receive or store full payment credentials."],
-      ["Device storage", "The cart is stored locally in the customer’s browser so it remains available between visits. The test shop does not create customer accounts."],
-      ["Shop activity", "The shop records limited events such as product views, cart additions, and checkout starts without attaching names, email addresses, phone numbers, or shipping addresses."],
-      ["Use of information", "Order information is used only for fulfillment, customer service, fraud prevention, and required business records."],
+      ["Information used for orders", "Stripe provides the shop with the contact, order, payment-status, shipping, and pickup details needed to prepare and fulfill a purchase. The shop uses that information for fulfillment, customer service, fraud prevention, refunds, disputes, and required business records."],
+      ["Payment information", "Payment details are entered on Stripe’s hosted checkout. Jake’s 3D Print Shop does not receive or store full card or bank account numbers. Stripe processes payment information under its own privacy terms."],
+      ["Cart storage", "The cart is stored locally in your browser so it remains available between visits. The shop does not create customer accounts. You can clear the cart through the site or remove the site’s stored data in your browser settings."],
+      ["Storefront activity", "The site records limited events such as product views, cart additions, and checkout starts. These events may include product, variant, fulfillment, item-count, and sales-channel details, but the event payload does not include a customer name, email address, phone number, payment credential, or shipping address."],
+      ["Sharing and retention", "Information is shared with service providers only as needed to operate the storefront, process payments, deliver orders, prevent abuse, or comply with law. Order and support records are kept only as long as reasonably needed for those purposes and legal or accounting requirements."],
     ],
   },
   terms: {
     title: "Terms",
-    intro: "Draft terms for product and checkout testing. Merchant approval is required before public launch.",
+    description: "Purchase and website terms for Jake’s 3D Print Shop.",
+    intro: "By using this site or placing an order, you agree to these terms. They are intended to set clear expectations for a small made-to-order shop.",
     sections: [
-      ["Product appearance", "3D-printed objects naturally show layer lines and small variations. Screen colors can also differ from physical filament colors."],
-      ["Personal use", "Products are sold as physical objects for their described purpose. Unless explicitly stated, purchasing an item does not transfer design or reproduction rights."],
-      ["Availability", "Small-batch and made-to-order availability can change. A completed Stripe payment is required before an order enters the production queue."],
-      ["Test environment", "Demo listings are illustrative and must not be treated as real products while the test-store banner is visible."],
+      ["Orders and payment", "Prices are shown in U.S. dollars. Available shipping, pickup, taxes, and the order total are shown before payment. An order enters the production queue only after Stripe confirms payment. The shop may cancel and refund an order that cannot be produced or fulfilled as offered."],
+      ["Product appearance", "3D-printed objects naturally show layer lines, seams, and small variations. Screen colors, lighting, and filament batches can also make a physical item look slightly different from its photographs."],
+      ["Care and intended use", "Follow the care information on the product page. Unless a listing expressly says otherwise, printed items are not toys, food-contact products, dishwasher safe, microwave safe, or intended for high-heat environments. Customers are responsible for using each item only for its stated purpose."],
+      ["Design and content rights", "Products are sold as physical objects for personal use. A purchase does not transfer design, reproduction, resale, photography, trademark, or other intellectual-property rights. Site text, branding, and images may not be reused without permission or another valid legal basis."],
+      ["Availability and site accuracy", "Small-batch availability, colors, and production timing can change. The shop may correct an obvious listing or pricing error before fulfillment and will offer a refund if the corrected terms are not accepted. The shop does not guarantee uninterrupted site availability."],
+      ["Governing terms", "These terms are governed by North Carolina law, without limiting consumer rights that cannot legally be waived. If part of these terms is unenforceable, the remaining terms continue to apply."],
     ],
   },
 } as const;
@@ -54,24 +65,46 @@ type Props = { params: Promise<{ policy: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { policy } = await params;
   const entry = policies[policy as keyof typeof policies];
-  return { title: entry?.title || "Policy" };
+  if (!entry) return { title: "Policy", robots: { index: false, follow: false } };
+
+  const canonical = `/policies/${policy}`;
+  return {
+    title: entry.title,
+    description: entry.description,
+    alternates: { canonical },
+    openGraph: {
+      title: entry.title,
+      description: entry.description,
+      type: "website",
+      url: canonical,
+    },
+  };
 }
 
 export default async function PolicyPage({ params }: Props) {
   const { policy } = await params;
   const entry = policies[policy as keyof typeof policies];
   if (!entry) notFound();
+
   return (
     <section className="policy-page">
       <div className="breadcrumbs"><Link href="/">Home</Link><span>/</span><span>Policies</span></div>
-      <p className="eyebrow">Draft for review</p>
+      <p className="eyebrow">Shop policy</p>
       <h1>{entry.title}</h1>
+      <p className="policy-effective">Effective {EFFECTIVE_DATE}</p>
       <p className="policy-intro">{entry.intro}</p>
       <div className="policy-sections">
         {entry.sections.map(([title, content]) => (
           <article key={title}><div><h2>{title}</h2><p>{content}</p></div></article>
         ))}
       </div>
+      <aside className="policy-contact" aria-labelledby="policy-contact-title">
+        <div>
+          <p className="eyebrow">Questions or order help</p>
+          <h2 id="policy-contact-title">Contact the shop.</h2>
+        </div>
+        <a className="text-link" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL} <span aria-hidden="true">↗</span></a>
+      </aside>
       <Link className="text-link" href="/">Back to the shop <span aria-hidden="true">↗</span></Link>
     </section>
   );

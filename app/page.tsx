@@ -60,7 +60,11 @@ export default async function Home() {
                 href={`/products/${product.slug}`}
                 key={product.id}
               >
-                <ProductVisual product={product} imageAlt={`${product.name} from the current collection`} />
+                <ProductVisual
+                  product={product}
+                  imageAlt={`${product.name} from the current collection`}
+                  priority={index === 0}
+                />
                 <span className="home-object-tile-copy">
                   <small>{product.category} / {storefrontProductStatus(product)}</small>
                   <strong>{product.name}</strong>

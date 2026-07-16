@@ -5,10 +5,12 @@ import { OfficePilot } from "./OfficePilot";
 export const metadata: Metadata = {
   title: "Office keychain rack",
   description: "Private keychain-rack checkout for the office pilot.",
+  alternates: { canonical: "/office" },
   robots: { index: false, follow: false },
   openGraph: {
     title: "Office keychain rack",
     description: "Private keychain-rack checkout for the office pilot.",
+    url: "/office",
     images: [],
   },
   twitter: {

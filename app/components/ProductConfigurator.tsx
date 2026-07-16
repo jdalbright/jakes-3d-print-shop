@@ -59,7 +59,6 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
       itemCount: quantity,
     });
     setAdded(true);
-    window.setTimeout(() => setAdded(false), 2200);
   }
 
   return (
@@ -76,7 +75,10 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
             <button
               className={variantIndex === index ? "selected" : ""}
               key={item.priceId}
-              onClick={() => setVariantIndex(index)}
+              onClick={() => {
+                setVariantIndex(index);
+                setAdded(false);
+              }}
               type="button"
               aria-pressed={variantIndex === index}
             >
@@ -94,7 +96,10 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
               <button
                 className={`colorway-option ${color === item.label ? "selected" : ""}`}
                 key={item.label}
-                onClick={() => setColor(item.label)}
+                onClick={() => {
+                  setColor(item.label);
+                  setAdded(false);
+                }}
                 type="button"
                 aria-label={`Choose ${item.label}. Base: ${item.baseColor}. Cap: ${item.capColor}.`}
                 aria-pressed={color === item.label}
@@ -120,7 +125,10 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
               <button
                 className={color === item ? "selected" : ""}
                 key={item}
-                onClick={() => setColor(item)}
+                onClick={() => {
+                  setColor(item);
+                  setAdded(false);
+                }}
                 type="button"
                 aria-label={`Choose ${item}`}
                 aria-pressed={color === item}
@@ -142,12 +150,18 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
       <div className="buy-row">
         <label>
           <span>Quantity</span>
-          <select value={quantity} onChange={(event) => setQuantity(Number(event.target.value))}>
+          <select
+            value={quantity}
+            onChange={(event) => {
+              setQuantity(Number(event.target.value));
+              setAdded(false);
+            }}
+          >
             {quantities.map((item) => <option key={item}>{item}</option>)}
           </select>
         </label>
-        <button className="primary-button" disabled={soldOut || previewOnly} onClick={addToCart} type="button">
-          {soldOut ? "Sold out" : previewOnly ? "Preview only" : added ? "Added to cart" : "Add to cart"}
+        <button className="primary-button" data-added={added || undefined} disabled={soldOut || previewOnly} onClick={addToCart} type="button">
+          {soldOut ? "Sold out" : previewOnly ? "Preview only" : added ? "Added — add another" : "Add to cart"}
         </button>
       </div>
       {previewMessage ? <p className="product-preview-note" role="status">{previewMessage}</p> : null}
@@ -160,8 +174,8 @@ export function ProductConfigurator({ product }: { product: StoreProduct }) {
 
       <div className="mobile-buy-bar">
         <span><small>{variant.sizeLabel}</small><strong>{pricingInFinalTesting ? "Price pending" : money(variant.unitAmount)}</strong></span>
-        <button className="primary-button" disabled={soldOut || previewOnly} onClick={addToCart} type="button">
-          {soldOut ? "Sold out" : previewOnly ? "Preview only" : added ? "Added" : "Add to cart"}
+        <button className="primary-button" data-added={added || undefined} disabled={soldOut || previewOnly} onClick={addToCart} type="button">
+          {soldOut ? "Sold out" : previewOnly ? "Preview only" : added ? "Add another" : "Add to cart"}
         </button>
       </div>
     </div>

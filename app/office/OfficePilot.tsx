@@ -77,7 +77,6 @@ export function OfficePilot({ checkoutEnabled, keychain, recommendations }: Prop
       salesChannel: "office_nfc",
     });
     setAdded(true);
-    window.setTimeout(() => setAdded(false), 2200);
   }
 
   const keychainBaseVariant = keychain ? variantForQuantity(keychain, 1) : undefined;
@@ -92,7 +91,7 @@ export function OfficePilot({ checkoutEnabled, keychain, recommendations }: Prop
           <p className="eyebrow">Office keychain rack / private pilot</p>
           <h1>{keychainBaseVariant ? `Pay ${money(keychainBaseVariant.unitAmount).replace(".00", "")}. Take one.` : "Pay. Take one."}</h1>
         </div>
-        <p>Check the rack first, then pay securely and take any available design. The public shop is being refreshed for the first launch.</p>
+        <p>Check the rack first, then pay securely and take any available design. This unlisted page is reserved for the keychain-rack pilot.</p>
       </div>
 
       {searchParams.get("checkout") === "canceled" ? (
@@ -101,9 +100,9 @@ export function OfficePilot({ checkoutEnabled, keychain, recommendations }: Prop
 
       {!keychain ? (
         <div className="office-empty">
-          <p className="eyebrow">Catalog setup</p>
-          <h2>The office rack is being prepared.</h2>
-          <p>The private page is ready, but its Stripe test keychain product has not been added yet.</p>
+          <p className="eyebrow">Temporarily unavailable</p>
+          <h2>The office rack cannot accept orders right now.</h2>
+          <p>Please check again later or email <a href="mailto:hello@jalbright.dev">hello@jalbright.dev</a>.</p>
         </div>
       ) : null}
 
@@ -149,11 +148,14 @@ export function OfficePilot({ checkoutEnabled, keychain, recommendations }: Prop
                 </label>
                 <button
                   className="primary-button"
-                  disabled={keychainSoldOut || !keychainVariant}
+                  data-added={added || undefined}
+                  disabled={!checkoutEnabled || keychainSoldOut || !keychainVariant || added}
                   onClick={() => addKeychainToCart(keychain, keychainQuantity, keychain.colors[0])}
                   type="button"
                 >
-                  {keychainSoldOut
+                  {!checkoutEnabled
+                    ? "Ordering unavailable"
+                    : keychainSoldOut
                     ? "Rack sold out"
                     : added
                       ? "Added to cart"
@@ -169,11 +171,13 @@ export function OfficePilot({ checkoutEnabled, keychain, recommendations }: Prop
               <p className="office-fine-print">Saved while you browse · Rack payment stays separate from made-to-order items · Stripe receipt by email</p>
               <details className="office-rack-details">
                 <summary>How the honor system works</summary>
-                <ol className="office-steps">
-                  <li><span>1</span>Make sure a keychain is physically available.</li>
-                  <li><span>2</span>Add it to your cart, then choose anything else you want.</li>
-                  <li><span>3</span>Pay for the rack item at checkout, then take it. No confirmation needs to be shown.</li>
-                </ol>
+                <div className="office-details-content">
+                  <ol className="office-steps">
+                    <li><span>1</span>Make sure a keychain is physically available.</li>
+                    <li><span>2</span>Add it to your cart, then choose anything else you want.</li>
+                    <li><span>3</span>Pay for the rack item at checkout, then take it. No confirmation needs to be shown.</li>
+                  </ol>
+                </div>
               </details>
             </div>
           </article>
@@ -181,9 +185,9 @@ export function OfficePilot({ checkoutEnabled, keychain, recommendations }: Prop
       </div>
 
       {!checkoutEnabled ? (
-        <div className="test-callout office-checkout-paused">
-          <b>Checkout is safely paused.</b>
-          <span>Add the office products to the Stripe test catalog to test the rack payment flow without making a real charge.</span>
+        <div className="test-callout office-checkout-paused" role="status">
+          <b>Ordering is temporarily unavailable.</b>
+          <span>Please check again later. No payment attempt can be started while ordering is paused.</span>
         </div>
       ) : null}
 

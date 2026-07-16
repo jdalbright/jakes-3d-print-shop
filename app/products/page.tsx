@@ -5,6 +5,13 @@ import { getCatalog } from "../lib/catalog";
 export const metadata: Metadata = {
   title: "Modern objects",
   description: "Shop design-led desk and home objects made in small batches in Raleigh, NC.",
+  alternates: { canonical: "/products" },
+  openGraph: {
+    title: "Modern objects",
+    description: "Shop design-led desk and home objects made in small batches in Raleigh, NC.",
+    type: "website",
+    url: "/products",
+  },
 };
 
 export default async function ProductsPage() {

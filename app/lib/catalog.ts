@@ -1,7 +1,9 @@
 import "server-only";
+import { cache } from "react";
 import type Stripe from "stripe";
 import { buildColorHexes, normalizeProductImages, parseColorwaysMetadata, splitMetadata, textMetadata } from "./catalog-metadata";
 import { catalogPreviewProducts } from "./catalog-preview-products";
+import { checkLiveCatalogReadiness } from "./catalog-readiness";
 import { demoProducts, officeDemoProducts } from "./demo-catalog";
 import {
   sabreDesignAcornContainerImages,
@@ -11,7 +13,7 @@ import {
   sabreDesignPaperTowelHolderImages,
   sabreDesignPhoneStandImages,
 } from "./sabredesign-media";
-import { getStripe } from "./stripe";
+import { getStripe, getStripeRuntimeConfiguration } from "./stripe";
 import type { CatalogResult, CatalogVisibility, OfficeFulfillment, ProductColorway, ProductLicenseStatus, StoreProduct } from "./types";
 
 const accents = ["clay", "ocean", "graphite", "moss", "rose", "yellow"];
@@ -112,7 +114,7 @@ function productFromStripe(
     .filter((item): item is ProductColorway => Boolean(item));
   const fallbackImages = localProductImages[slug] || [];
   const stripeImages = normalizeProductImages(product.images, null);
-  const images = stripeImages.length ? stripeImages : fallbackImages;
+  const images = fallbackImages.length ? fallbackImages : stripeImages;
   const description = product.description || "A small-batch 3D print made with care in Jake's studio.";
   const defaultLeadTime = stockStatus === "sold_out"
     ? "Currently unavailable"
@@ -159,9 +161,14 @@ function productFromStripe(
   };
 }
 
-export async function getCatalog(visibility: CatalogVisibility = "public"): Promise<CatalogResult> {
+const loadCatalog = cache(async (visibility: CatalogVisibility): Promise<CatalogResult> => {
+  const stripeConfiguration = getStripeRuntimeConfiguration();
   const stripe = getStripe();
   if (!stripe) {
+    if (stripeConfiguration.liveModeRequested) {
+      console.error("live_catalog_unavailable", { reason: "stripe_configuration" });
+      return { products: [], source: "stripe", checkoutEnabled: false };
+    }
     return {
       products: withCatalogPreviews(visibility === "office" ? officeDemoProducts : demoProducts, visibility),
       source: "demo",
@@ -172,7 +179,7 @@ export async function getCatalog(visibility: CatalogVisibility = "public"): Prom
   try {
     const [productsResult, pricesResult] = await Promise.all([
       stripe.products.list({ active: true, limit: 100 }),
-      stripe.prices.list({ active: true, currency: "usd", type: "one_time", limit: 100 }),
+      stripe.prices.list({ active: true, limit: 100 }),
     ]);
 
     const visibleProducts = productsResult.data.filter(
@@ -193,6 +200,20 @@ export async function getCatalog(visibility: CatalogVisibility = "public"): Prom
       .filter((product): product is StoreProduct => product !== null)
       .filter((product) => product.visibility === visibility);
 
+    if (stripeConfiguration.liveLaunchEnabled) {
+      const readiness = checkLiveCatalogReadiness({
+        products: productsResult.data,
+        prices: pricesResult.data,
+        productsTruncated: productsResult.has_more,
+        pricesTruncated: pricesResult.has_more,
+      });
+      if (!readiness.ready) {
+        console.error("live_catalog_unavailable", { reason: "catalog_incomplete", issues: readiness.issues });
+        return { products: [], source: "stripe", checkoutEnabled: false };
+      }
+      return { products, source: "stripe", checkoutEnabled: true };
+    }
+
     if (visibility === "office") {
       return { products, source: "stripe", checkoutEnabled: true };
     }
@@ -202,12 +223,20 @@ export async function getCatalog(visibility: CatalogVisibility = "public"): Prom
       ? { products: productsWithPreviews, source: "stripe", checkoutEnabled: true }
       : { products: withCatalogPreviews(demoProducts, visibility), source: "demo", checkoutEnabled: false };
   } catch {
+    if (stripeConfiguration.liveModeRequested) {
+      console.error("live_catalog_unavailable", { reason: "stripe_request" });
+      return { products: [], source: "stripe", checkoutEnabled: false };
+    }
     return {
       products: withCatalogPreviews(visibility === "office" ? [] : demoProducts, visibility),
       source: "demo",
       checkoutEnabled: false,
     };
   }
+});
+
+export async function getCatalog(visibility: CatalogVisibility = "public"): Promise<CatalogResult> {
+  return loadCatalog(visibility);
 }
 
 export async function getCatalogProduct(slug: string) {

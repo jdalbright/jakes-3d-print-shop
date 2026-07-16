@@ -1,3 +1,9 @@
+export type ConfirmedBambuPlaMatteColor = {
+  readonly name: string;
+  readonly code: string;
+  readonly hex: string;
+};
+
 export const confirmedBambuPlaMatteColorGroups = [
   {
     name: "Neutrals",
@@ -49,6 +55,6 @@ export const confirmedBambuPlaMatteColorGroups = [
   },
 ] as const;
 
-export const confirmedBambuPlaMatteColors = confirmedBambuPlaMatteColorGroups.flatMap(
+export const confirmedBambuPlaMatteColors = confirmedBambuPlaMatteColorGroups.flatMap<ConfirmedBambuPlaMatteColor>(
   (group) => group.colors,
 );

@@ -1,6 +1,6 @@
 # Jake’s 3D Print Shop
 
-A private test storefront for design-led desk and home objects made in Raleigh. Products and prices are managed in Stripe; the site provides the catalog, variants, persistent cart, $12 flat-rate U.S. shipping, prepaid Raleigh pickup, and Stripe-hosted Checkout.
+A production-capable storefront for design-led desk and home objects made in Raleigh. Products and prices are managed in Stripe; the site provides the catalog, variants, persistent cart, $12 flat-rate U.S. shipping, prepaid Raleigh pickup, and Stripe-hosted Checkout. The hosted site remains access-restricted and in test mode until the public-launch gates are complete.
 
 ## Local development
 
@@ -22,7 +22,20 @@ The site works without Stripe credentials using a read-only demo catalog. Checko
 npm run stripe:seed
 ```
 
-The seeder is idempotent and refuses live keys. It creates Stripe Products and one-time USD Prices with the metadata contract the storefront expects. When a price amount changes, it transfers the stable lookup key to a replacement Price and archives the old Price.
+Use the deployed HTTPS `SITE_URL` when syncing catalog images. Run
+`npm run stripe:seed:dry-run` to audit without changing Stripe.
+
+## Prepare Stripe live mode
+
+Live Products and Prices are separate from test-mode objects. Keep live values
+in ignored `.env.live.local`, audit with `npm run stripe:live:audit`, and review
+the result before using the confirmation-gated live sync. The application fails
+closed when live configuration or the expected catalog is incomplete.
+
+See [`docs/launch-runbook.md`](docs/launch-runbook.md) for the activation,
+controlled purchase/refund, public-access, monitoring, and rollback sequence.
+
+The seeder is idempotent and refuses live keys. It creates Stripe Products with the General - Tangible Goods tax code (`txcd_99999999`) and one-time, tax-exclusive USD Prices with the metadata contract the storefront expects. When an immutable Price field changes, it transfers the stable lookup key to a replacement Price and archives the old Price.
 
 ## Stripe webhook
 
@@ -51,7 +64,7 @@ Active products appear only when `storefront=true`. Supported Product metadata:
 - `accent`: `clay`, `ocean`, `graphite`, `moss`, `rose`, or `yellow`
 - `detail_copy`, `highlights` (pipe-separated), `fit_note`, `material`, `finish`, `care`, and `lead_time`
 
-Use Stripe Product images for the product gallery; the first image is the catalog-card image. Use one-time USD Prices for size variants. Price metadata supports `size_label`, `variant_key`, `dimensions`, `min_quantity`, and `max_quantity`; `lookup_key` is used as the stable SKU. Quantity bounds are always enforced by the server before Checkout opens.
+Product galleries use the authorized self-hosted files in `public/products/`; Stripe Product image URLs point back to those deployed files. Use one-time, tax-exclusive USD Prices for size variants. Price metadata supports `size_label`, `variant_key`, `dimensions`, `min_quantity`, and `max_quantity`; `lookup_key` is used as the stable SKU. Quantity bounds are always enforced by the server before Checkout opens.
 
 The unlisted `/office` route loads only `visibility=office` products (currently the keychain rack). Normal catalog routes exclude them. Office Checkout accepts one office product at a time, pickup fulfillment only, and records `sales_channel=office_nfc` plus the trusted `office_fulfillment` value in Stripe metadata. Public made-to-order products use the normal cart with U.S. shipping or Raleigh pickup.
 
@@ -75,5 +88,7 @@ The site records privacy-conscious `product_view`, `add_to_cart`, `checkout_star
 
 ```bash
 npm run lint
+npm run typecheck
 npm test
+npm audit --audit-level=high
 ```

@@ -5,9 +5,24 @@ import { getStripe } from "../../lib/stripe";
 import { PICKUP_AREA } from "../../lib/store-config";
 import { PurchasedCartCleanup } from "./PurchasedCartCleanup";
 
-export const metadata: Metadata = { title: "Order confirmation", robots: { index: false, follow: false } };
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-type Props = { searchParams: Promise<{ session_id?: string }> };
+export const metadata: Metadata = {
+  title: "Order confirmation",
+  description: "Review the status and fulfillment details for your order.",
+  alternates: { canonical: "/order/success" },
+  robots: { index: false, follow: false },
+  openGraph: {
+    title: "Order confirmation",
+    description: "Review the status and fulfillment details for your order.",
+    url: "/order/success",
+    images: [],
+  },
+};
+
+type Props = { searchParams: Promise<{ session_id?: string | string[] }> };
+const checkoutSessionIdPattern = /^cs_(?:test|live)_[A-Za-z0-9]{16,240}$/;
 
 function money(amount: number | null, currency: string | null) {
   if (amount === null || !currency) return "—";
@@ -15,10 +30,11 @@ function money(amount: number | null, currency: string | null) {
 }
 
 export default async function SuccessPage({ searchParams }: Props) {
-  const { session_id: sessionId } = await searchParams;
+  const { session_id: sessionIdValue } = await searchParams;
+  const sessionId = typeof sessionIdValue === "string" ? sessionIdValue : null;
   const stripe = getStripe();
 
-  if (!stripe || !sessionId || !sessionId.startsWith("cs_")) {
+  if (!stripe || !sessionId || !checkoutSessionIdPattern.test(sessionId)) {
     return (
       <section className="confirmation-page invalid">
         <p className="eyebrow">Order lookup</p>
