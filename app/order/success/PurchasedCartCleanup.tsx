@@ -9,11 +9,12 @@ type PurchasedCartItem = {
 };
 
 export function PurchasedCartCleanup({ items }: { items: PurchasedCartItem[] }) {
-  const { removeItem } = useStore();
+  const { cartHydrated, removeItem } = useStore();
 
   useEffect(() => {
+    if (!cartHydrated) return;
     items.forEach((item) => removeItem(item.priceId, item.color));
-  }, [items, removeItem]);
+  }, [cartHydrated, items, removeItem]);
 
   return null;
 }

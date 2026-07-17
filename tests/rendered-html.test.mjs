@@ -627,6 +627,8 @@ test("office checkout remains keychain-only while public commercial previews are
   assert.match(success, /Jake received your pickup note/);
   assert.match(success, /Continue with the rest of your cart/);
   assert.match(success, /PurchasedCartCleanup/);
+  assert.match(shell, /cartHydrated: hydrated/);
+  assert.match(cleanup, /if \(!cartHydrated\) return/);
   assert.match(cleanup, /removeItem\(item\.priceId, item\.color\)/);
   assert.match(cart, /item\.salesChannel === "office_nfc"/);
   assert.match(cart, /Checkout keychain separately/);

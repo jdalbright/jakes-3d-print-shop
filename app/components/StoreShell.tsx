@@ -23,6 +23,7 @@ function clampCartQuantity(item: CartItem, quantity: number) {
 
 type StoreContextValue = {
   items: CartItem[];
+  cartHydrated: boolean;
   addItem: (item: CartItem) => void;
   updateQuantity: (priceId: string, color: string, quantity: number) => void;
   removeItem: (priceId: string, color: string) => void;
@@ -130,13 +131,14 @@ export function StoreShell({
   const value = useMemo(
     () => ({
       items,
+      cartHydrated: hydrated,
       addItem,
       updateQuantity,
       removeItem,
       clearCart,
       checkoutEnabled,
     }),
-    [addItem, checkoutEnabled, clearCart, items, removeItem, updateQuantity],
+    [addItem, checkoutEnabled, clearCart, hydrated, items, removeItem, updateQuantity],
   );
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);

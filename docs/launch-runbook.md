@@ -7,8 +7,10 @@ below is complete. The public URL is
 ## Required gates
 
 - Confirm North Carolina sales-tax registration and any required assumed-name
-  filing. Add the active registration and physical-goods tax treatment in both
-  Stripe test and live mode.
+  filing. Continue from [`nc-registration-handoff.md`](nc-registration-handoff.md)
+  without storing personal identifiers in the repository. Add the active
+  registration and physical-goods tax treatment in both Stripe test and live
+  mode.
 - Confirm the Stripe account support email, branding, statement descriptor,
   receipt emails, payout account, and refund permissions.
 - Keep the SabreDesign commercial membership active and retain the supporting
